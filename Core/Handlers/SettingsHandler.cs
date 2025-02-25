@@ -37,15 +37,28 @@ namespace Lyuze.Core.Handlers {
         private static readonly Lazy<SettingsHandler> _instance = new(() => {
             var basePath = AppDomain.CurrentDomain.BaseDirectory;
             var filePath = $@"{basePath}Resources\Settings\settings.json";
-            var json = File.ReadAllText(filePath);
-            var settings = JsonConvert.DeserializeObject<SettingsHandler>(json);
-            return settings ?? new SettingsHandler { 
-                Discord = new _Discord {
-                    Name = "Default Discord Name",
-                    Token = "Default Discord Token",
-                    GuildId = 0
-                }
-            };
+
+            if (File.Exists(filePath)) {
+                var json = File.ReadAllText(filePath);
+                var settings = JsonConvert.DeserializeObject<SettingsHandler>(json);
+                return settings ?? new SettingsHandler {
+                    Discord = new _Discord {
+                        Name = "Default Discord Name",
+                        Token = "Default Discord Token",
+                        GuildId = 0
+                    }
+                };
+            } else {
+                var settings = new SettingsHandler {
+                    Discord = new _Discord {
+                        Name = "Default Discord Name",
+                        Token = "Default Discord Token",
+                        GuildId = 0
+                    }
+                };
+                SaveSettings(settings, filePath);
+                return settings;
+            }
         });
 
         public static SettingsHandler Instance => _instance.Value;
@@ -53,20 +66,44 @@ namespace Lyuze.Core.Handlers {
         public static SettingsHandler Data() {
             var basePath = AppDomain.CurrentDomain.BaseDirectory;
             var filePath = $@"{basePath}Resources\Settings\settings.json";
-            var json = File.ReadAllText(filePath);
-            var settings = JsonConvert.DeserializeObject<SettingsHandler>(json);
-            return settings ?? new SettingsHandler {
-                Discord = new _Discord {
-                    Name = "Default Discord Name",
-                    Token = "Default Discord Token",
-                    GuildId = 0
-                }
-            };
+
+            if (File.Exists(filePath)) {
+                var json = File.ReadAllText(filePath);
+                var settings = JsonConvert.DeserializeObject<SettingsHandler>(json);
+                return settings ?? new SettingsHandler {
+                    Discord = new _Discord {
+                        Name = "Default Discord Name",
+                        Token = "Default Discord Token",
+                        GuildId = 0
+                    }
+                };
+            } else {
+                var settings = new SettingsHandler {
+                    Discord = new _Discord {
+                        Name = "Default Discord Name",
+                        Token = "Default Discord Token",
+                        GuildId = 0
+                    }
+                };
+                SaveSettings(settings, filePath);
+                return settings;
+            }
+        }
+
+        public void SaveSettings() {
+            var basePath = AppDomain.CurrentDomain.BaseDirectory;
+            var filePath = $@"{basePath}Resources\Settings\settings.json";
+            SaveSettings(this, filePath);
+        }
+
+        private static void SaveSettings(SettingsHandler settings, string filePath) {
+            var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            File.WriteAllText(filePath, json);
         }
 
     }
 
-    public partial class ApIs {
+        public partial class ApIs {
         [JsonProperty(nameof(Tenor))]
         public string? Tenor { get; set; }
 
@@ -110,8 +147,11 @@ namespace Lyuze.Core.Handlers {
         [JsonProperty("DJ ID")]
         public ulong DjId { get; set; }
 
-        [JsonProperty("Join ID")]
-        public ulong JoinId { get; set; }
+        [JsonProperty("Join Role ID")]
+        public ulong JoinRoleId { get; set; }
+
+        [JsonProperty("Reaction Roles Message ID")]
+        public ulong ReactionRoleMessageId { get; set; }
     }
 
     public partial class Database {
