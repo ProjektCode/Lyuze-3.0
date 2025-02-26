@@ -8,7 +8,7 @@ namespace Lyuze.Core.Modules {
         private readonly AnimeScheduleHandler _animeScheduleHandler = animeScheduleHandler;
 
         [SlashCommand("track_anime", "Track a new anime by MAL ID.")]
-        public async Task TrackAnime([Summary("Uses the MyAnimeList Anime ID to track, it is the numbers you see in the url. ex) 58437")]int malId) {
+        public async Task TrackAnime([Summary(description:"Ex - 58437")]int malId) {
             try {
 
                 await _animeScheduleHandler.AddAnimeToTrackAsync(malId);

@@ -54,7 +54,7 @@ namespace Lyuze.Core.Handlers {
                         if (role != null) {
                             await guildUser.AddRoleAsync(role);
                         }
-                    } else { Console.WriteLine("reaction add role event false"); }
+                    }
                 }
 
             } catch (Exception ex) { Console.WriteLine(ex.ToString()); };
@@ -76,7 +76,7 @@ namespace Lyuze.Core.Handlers {
                         if (role != null) {
                             await guildUser.RemoveRoleAsync(role);
                         }
-                    } else { Console.WriteLine("reaction remove role false"); }
+                    }
                 }
 
             } catch (Exception ex) { Console.WriteLine(ex.ToString()); };

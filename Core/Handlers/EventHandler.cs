@@ -21,6 +21,7 @@ namespace Lyuze.Core.Handlers {
             _client.Log += OnLogAsync;
             _cmds.Log += OnCommandLogAsync;
             _client.Ready += OnReadyAsync;
+
         }
 
         private async Task OnUserJoinedAsync(SocketGuildUser user) {

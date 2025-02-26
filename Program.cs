@@ -28,7 +28,7 @@ namespace Lyuze {
                     }
                 ))
                     .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
-                    .AddSingleton<InteractionHandler>()
+                    .AddSingleton<Lyuze.Core.Handlers.InteractionHandler>()
                     .AddSingleton<Lyuze.Core.Handlers.EventHandler>()
                     .AddSingleton<Lyuze.Core.Handlers.ReactionRoleHandler>()
                     .AddSingleton<Lyuze.Core.Handlers.AnimeScheduleHandler>()
