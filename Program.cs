@@ -7,6 +7,9 @@ using Microsoft.Extensions.Hosting;
 using Lyuze.Core.Handlers;
 using Microsoft.Extensions.Logging;
 using Lyuze.Core.Services;
+using Lyuze.Core.Database.Services;
+using Lyuze.Core.Database.Model;
+using Lyuze.Core.Database;
 
 namespace Lyuze {
     public class Program {
@@ -14,10 +17,16 @@ namespace Lyuze {
         public static Task Main() => MainAsync();
 
         public static async Task MainAsync() {
+            await SettingsHandler.LoadAsync();
+            var settings = SettingsHandler.Instance;
+
+            var DbCtx = new DatabaseContext(settings);
+            Player.Initialize(DbCtx);
 
             using IHost host = Host.CreateDefaultBuilder()
                 .ConfigureServices((_, services) =>
                     services
+                    .AddSingleton(_ => SettingsHandler.Instance)
                     .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig {
                         GatewayIntents = GatewayIntents.All,
                         WebSocketProvider = WS4NetProvider.Instance,
@@ -25,13 +34,13 @@ namespace Lyuze {
                         LogLevel = LogSeverity.Info,
                         DefaultRetryMode = RetryMode.AlwaysRetry,
                         LogGatewayIntentWarnings = false,
-                        MessageCacheSize = 1024
-                    }
-                ))
+                        MessageCacheSize = 102 }))
+
                     .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
                     .AddSingleton<InteractionHandler>()
                     .AddSingleton<Core.Handlers.EventHandler>()
                     .AddSingleton<ReactionRolesService>()
+                    .AddSingleton<LevelingService>()
                     .AddLogging(x => { x.ClearProviders(); x.AddSimpleConsole(); x.SetMinimumLevel(LogLevel.Trace);})
                 ).Build();
 
@@ -45,10 +54,11 @@ namespace Lyuze {
 
             var _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
             var _cmds = serviceProvider.GetRequiredService<InteractionService>();
+            var _settings = serviceProvider.GetRequiredService<SettingsHandler>();
             await serviceProvider.GetRequiredService<InteractionHandler>().InitAsync();
             serviceProvider.GetRequiredService<Core.Handlers.EventHandler>();
 
-            await _client.LoginAsync(TokenType.Bot, SettingsHandler.Instance.Discord.Token);
+            await _client.LoginAsync(TokenType.Bot, _settings.Discord.Token);
             await _client.StartAsync();
 
             await Task.Delay(Timeout.Infinite);

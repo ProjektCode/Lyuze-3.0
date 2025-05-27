@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 
 namespace Lyuze.Core.Handlers {
-    public partial class SettingsHandler {
+    public class SettingsHandler {
         [JsonProperty("_Discord")]
         public _Discord Discord { get; set; } = new _Discord {
             Name = "Default Discord Name",
@@ -19,60 +19,69 @@ namespace Lyuze.Core.Handlers {
         public List<Uri>? ImageLinks { get; set; }
 
         [JsonProperty("Profile Banners")]
-        public List<Uri>? ProfileBanners { get; set; }
+        public List<Uri> ProfileBanners { get; set; } = [];
 
         [JsonProperty("Welcome Message")]
-        public List<string>? WelcomeMessage { get; set; }
+        public List<string> WelcomeMessage { get; set; } = [];
 
         [JsonProperty("Goodbye Message")]
-        public List<string>? GoodbyeMessage { get; set; }
+        public List<string> GoodbyeMessage { get; set; } = [];
 
         [JsonProperty(nameof(Status))]
-        public List<string>? Status { get; set; }
+        public List<string> Status { get; set; } = [];
 
         [JsonProperty(nameof(ReactionRoles))]
         public List<ReactionRoleEntry> ReactionRoles { get; set; } = [];
 
-        [JsonProperty(nameof(Database), NullValueHandling = NullValueHandling.Ignore)]
-        public Database? Database { get; set; }
+        [JsonProperty(nameof(Database))]
+        public Database Database { get; set; } = new Database {
+            MongoDb = "Default Mongodb",
+            PlayerCollection = "Default PlayerCollection",
+            DatabaseName = "Default Database Name"
+        };
 
-        private static readonly Lazy<SettingsHandler> _instance = new(() => {
-            var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            var filePath = Path.Combine(basePath, "Resources", "Settings", "settings.json");
-            return LoadFromFile(filePath);
-        });
-
-        public static SettingsHandler Instance => _instance.Value;
-
-        // Optional utility method for manual data loading (private)
-        private static SettingsHandler LoadFromFile(string filePath) {
-            if (File.Exists(filePath)) {
-                var json = File.ReadAllText(filePath);
-                var settings = JsonConvert.DeserializeObject<SettingsHandler>(json);
-                return settings ?? new SettingsHandler();
-            } else {
-                var settings = new SettingsHandler();
-                SaveSettings(settings, filePath);
-                return settings;
+        private static SettingsHandler? _instance;
+        public static SettingsHandler Instance {
+            get {
+                if (_instance == null)
+                    throw new InvalidOperationException("Settings not loaded yet.");
+                return _instance;
             }
+            private set => _instance = value;
         }
 
-
-        public void SaveSettings() {
+        public static async Task<SettingsHandler> LoadAsync() {
             var basePath = AppDomain.CurrentDomain.BaseDirectory;
             var filePath = Path.Combine(basePath, "Resources", "Settings", "settings.json");
-            SaveSettings(this, filePath);
+
+            SettingsHandler settings;
+
+            if (File.Exists(filePath)) {
+                var json = await File.ReadAllTextAsync(filePath);
+                settings = JsonConvert.DeserializeObject<SettingsHandler>(json) ?? new SettingsHandler();
+            } else {
+                settings = new SettingsHandler();
+                await SaveSettingsAsync(settings, filePath);
+            }
+
+            Instance = settings;  // <-- Assign the singleton instance here
+
+            return Instance;
         }
 
-        private static void SaveSettings(SettingsHandler settings, string filePath) {
+        private static async Task SaveSettingsAsync(SettingsHandler settings, string filePath) {
             var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
-            File.WriteAllText(filePath, json);
+            await File.WriteAllTextAsync(filePath, json);
+        }
+
+        public async Task SaveSettingsAsync() {
+            var basePath = AppDomain.CurrentDomain.BaseDirectory;
+            var filePath = Path.Combine(basePath, "Resources", "Settings", "settings.json");
+            await SaveSettingsAsync(this, filePath);
         }
     }
 
-    // Supporting classes below
-
-    public partial class ApIs {
+    public class ApIs {
         [JsonProperty(nameof(Tenor))]
         public string? Tenor { get; set; }
 
@@ -83,7 +92,7 @@ namespace Lyuze.Core.Handlers {
         public string? UnsplashSecret { get; set; }
     }
 
-    public partial class _Discord {
+    public class _Discord {
         [JsonProperty(nameof(Name))]
         public string? Name { get; set; }
 
@@ -94,7 +103,7 @@ namespace Lyuze.Core.Handlers {
         public required ulong GuildId { get; set; }
     }
 
-    public partial class IDs {
+    public class IDs {
         [JsonProperty("Owner ID")]
         public ulong OwnerId { get; set; }
 
@@ -132,8 +141,14 @@ namespace Lyuze.Core.Handlers {
         public ulong RoleId { get; set; }
     }
 
-    public partial class Database {
+    public class Database {
         [JsonProperty("MongoDB")]
-        public string? MongoDb { get; set; }
+        public required string MongoDb { get; set; }
+
+        [JsonProperty("Database")]
+        public required string DatabaseName {  get; set; }
+
+        [JsonProperty(nameof(PlayerCollection))]
+        public required string PlayerCollection {  get; set; }
     }
 }

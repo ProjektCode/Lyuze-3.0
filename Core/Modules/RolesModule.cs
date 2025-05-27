@@ -115,7 +115,7 @@ namespace Lyuze.Core.Modules {
                     SettingsHandler.Instance.IDs = new IDs();
 
                 SettingsHandler.Instance.IDs.ReactionRoleMessageId = message.Id;
-                SettingsHandler.Instance.SaveSettings();
+                await SettingsHandler.Instance.SaveSettingsAsync();
 
                 await message.AddReactionsAsync(emotes.ToArray());
 
@@ -180,7 +180,7 @@ namespace Lyuze.Core.Modules {
             _reactionRoleHandler.AddReactionRole(selectedEmoji, role.Id);
 
             SettingsHandler.Instance.ReactionRoles.Add(new ReactionRoleEntry { Emoji = selectedEmoji, RoleId = role.Id });
-            SettingsHandler.Instance.SaveSettings();
+            await SettingsHandler.Instance.SaveSettingsAsync();
 
             await FollowupAsync("Reaction role has been added and embed updated.", ephemeral: true);
         }
@@ -222,7 +222,7 @@ namespace Lyuze.Core.Modules {
                     RoleId = role.Id
                 });
 
-                SettingsHandler.Instance.SaveSettings();
+                await SettingsHandler.Instance.SaveSettingsAsync();
 
                 await FollowupAsync("Reaction has been added and saved.", ephemeral: true);
                 await MasterUtilities.DelayAndDeleteResponseAsync(Context);

@@ -28,7 +28,7 @@ namespace Lyuze.Core.Services {
         // Add a reaction-role mapping
         public void AddReactionRole(string emoji, ulong roleId) {
             try {
-
+                var settings = SettingsHandler.LoadAsync();
                 if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
                     Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
                     return;
