@@ -1,31 +1,24 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using System;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Lyuze.Core.Handlers {
     public class InteractionHandler(DiscordSocketClient client, InteractionService commands, IServiceProvider services) {
-
-        private readonly DiscordSocketClient _client = client;
-        private readonly InteractionService _commands = commands;
-        private readonly IServiceProvider _services = services;
-
         public async Task InitAsync() {
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-
-            _client.InteractionCreated += HandleInteraction;
+            await commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
+            client.InteractionCreated += HandleInteraction;
         }
 
         private async Task HandleInteraction(SocketInteraction arg) {
             try {
-                var ctx = new SocketInteractionContext(_client, arg);
-                await _commands.ExecuteCommandAsync(ctx, _services);
-
-            } catch (Exception ex) { 
+                var ctx = new SocketInteractionContext(client, arg);
+                await commands.ExecuteCommandAsync(ctx, services);
+            } catch (Exception ex) {
                 Console.WriteLine(ex.ToString());
             }
-
         }
-
     }
 }

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Lyuze.Core.Handlers;
 using Microsoft.Extensions.Logging;
+using Lyuze.Core.Services;
 
 namespace Lyuze {
     public class Program {
@@ -28,10 +29,9 @@ namespace Lyuze {
                     }
                 ))
                     .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
-                    .AddSingleton<Lyuze.Core.Handlers.InteractionHandler>()
-                    .AddSingleton<Lyuze.Core.Handlers.EventHandler>()
-                    .AddSingleton<Lyuze.Core.Handlers.ReactionRoleHandler>()
-                    .AddSingleton<Lyuze.Core.Handlers.AnimeScheduleHandler>()
+                    .AddSingleton<InteractionHandler>()
+                    .AddSingleton<Core.Handlers.EventHandler>()
+                    .AddSingleton<ReactionRolesService>()
                     .AddLogging(x => { x.ClearProviders(); x.AddSimpleConsole(); x.SetMinimumLevel(LogLevel.Trace);})
                 ).Build();
 
@@ -46,7 +46,7 @@ namespace Lyuze {
             var _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
             var _cmds = serviceProvider.GetRequiredService<InteractionService>();
             await serviceProvider.GetRequiredService<InteractionHandler>().InitAsync();
-            serviceProvider.GetRequiredService<Lyuze.Core.Handlers.EventHandler>();
+            serviceProvider.GetRequiredService<Core.Handlers.EventHandler>();
 
             await _client.LoginAsync(TokenType.Bot, SettingsHandler.Instance.Discord.Token);
             await _client.StartAsync();

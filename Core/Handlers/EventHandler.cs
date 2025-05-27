@@ -1,20 +1,17 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Lyuze.Core.Services;
 using Lyuze.Core.Utilities;
 
 namespace Lyuze.Core.Handlers {
     public class EventHandler {
         private readonly DiscordSocketClient _client;
         private readonly InteractionService _cmds;
-        private readonly ReactionRoleHandler _reactionRoleHandler;
-        private readonly AnimeScheduleHandler _animeScheduleHandler;
 
-        public EventHandler(DiscordSocketClient client, InteractionService cmds, AnimeScheduleHandler animeScheduleHandler) {
+        public EventHandler(DiscordSocketClient client, InteractionService cmds) {
             _client = client;
             _cmds = cmds;
-            _reactionRoleHandler = new ReactionRoleHandler(_client);
-            _animeScheduleHandler = animeScheduleHandler;
 
             //Register Events
             _client.UserJoined += OnUserJoinedAsync;
@@ -59,13 +56,11 @@ namespace Lyuze.Core.Handlers {
                 await _cmds.RegisterCommandsToGuildAsync(SettingsHandler.Instance.Discord.GuildId);
 
                 await _client.SetStatusAsync(UserStatus.Online);
-                var i = MasterUtilities.Instance.RandomListIndex(SettingsHandler.Instance.Status);
+                var i = MasterUtilities.Instance.RandomListIndex(SettingsHandler.Instance.Status ?? ["Online", "Idle", "Do Not Disturb"]);
                 var t = new Timer(async __ => { 
                     await _client.SetGameAsync(MasterUtilities.Instance.sList.ElementAtOrDefault(i), type: ActivityType.Listening);
                     i = i + 1 == MasterUtilities.Instance.sList.Count ? 0 : i + 1;
                 }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(120));
-
-                MasterUtilities.ReactionRoles(_reactionRoleHandler);
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.ToString());

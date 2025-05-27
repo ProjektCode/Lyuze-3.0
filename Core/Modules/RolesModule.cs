@@ -2,17 +2,27 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Handlers;
+using Lyuze.Core.Services;
 using Lyuze.Core.Utilities;
 using System.Data;
 
 namespace Lyuze.Core.Modules {
-    public class RolesModule(ReactionRoleHandler reactionRoleHandler) : InteractionModuleBase<SocketInteractionContext> {
+    public class RolesModule(ReactionRolesService reactionRoleHandler) : InteractionModuleBase<SocketInteractionContext> {
 
-        private readonly ReactionRoleHandler _reactionRoleHandler = reactionRoleHandler;
+        private readonly ReactionRolesService _reactionRoleHandler = reactionRoleHandler;
 
         [SlashCommand("remove_role", "Remove a specified role from a user")]
         public async Task RemoveRole(IUser user) {
             var guildUser = (SocketGuildUser)user;
+            var author = (SocketGuildUser)Context.User;
+
+            if(author.Id != guildUser.Id) {
+                if(!author.GuildPermissions.ManageRoles) {
+                    await RespondAsync("You do not have the required permissions to remove a role from another other.");
+                    return;
+                }
+            }
+
             var userRoles = guildUser.Roles.Where(role => !role.IsEveryone).ToList(); // Exclude @everyone role
 
             if (userRoles.Count == 0) {
@@ -38,7 +48,8 @@ namespace Lyuze.Core.Modules {
         }
 
         [ComponentInteraction("select_role_to_remove")]
-        public async Task HandleRoleSelection(string[] selectedValues) {
+        [RequireUserPermission(GuildPermission.Administrator)]
+        public async Task SelectRoleRemoval(string[] selectedValues) {
             if (selectedValues.Length == 0) {
                 await RespondAsync("No role selected.", ephemeral: true);
                 await MasterUtilities.DelayAndDeleteResponseAsync(Context);
@@ -69,85 +80,74 @@ namespace Lyuze.Core.Modules {
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task SetupReactionRoles() {
             try {
-
                 await DeferAsync();
+
+                var guild = Context.Guild;
+
+                var lines = new List<string>();
+                var emotes = new List<IEmote>();
+
+                foreach (var entry in SettingsHandler.Instance.ReactionRoles) {
+                    string roleName = guild.GetRole(entry.RoleId)?.Name ?? "(unknown role)";
+                    lines.Add($"{entry.Emoji} - {roleName}");
+
+                    try {
+                        if (entry.Emoji.StartsWith("<:")) {
+                            emotes.Add(Emote.Parse(entry.Emoji));
+                        } else {
+                            emotes.Add(new Emoji(entry.Emoji));
+                        }
+                    } catch (Exception ex) {
+                        Console.WriteLine($"Failed to parse emoji '{entry.Emoji}': {ex.Message}");
+                    }
+                }
 
                 var embed = new EmbedBuilder()
                     .WithTitle("ROLES")
-                    .WithDescription("React with the following emojis to get the corresponding roles:\n" +
-                                     "<:GachaUpdates:1343843757623349369> - Gacha Updates\n" +
-                                     "<:GameUpdates:1343843759540015104> - Game Updates\n" +
-                                     "<:Weeb:1343843763105038457> - Weeb\n" +
-                                     "---------------------------------------------\n" +
-                                     "React to the following emojis to get a colored name:\n" +
-                                     "❤️ - Red Name\n" +
-                                     "💙 - Blue Name\n" +
-                                     "💜 - Purple Name\n" +
-                                     "\U0001f5a4 - Black Name\n" +
-                                     "💛 - Yellow Name\n" +
-                                     "💚 - Green Name\n" +
-                                     "\U0001f9e1 - Orange Name\n" +
-                                     "\U0001f90e - Brown Name\n" +
-                                     "\U0001f90d - White Name\n" +
-                                     "\U0001fa77 - Pink Name\n" +
-                                     "\U0001fa76 - Grey Name\n" +
-                                     "\U0001fa75 - Light Blue Name\n" +
-                                     "🌈 - Rainbow Name\n")
+                    .WithDescription(string.Join("\n", lines))
                     .WithColor(Color.DarkRed)
                     .WithImageUrl("https://i.imgur.com/w364R6i.png")
                     .Build();
 
                 var message = await Context.Channel.SendMessageAsync(embed: embed);
 
-                //Saves the message id for settings
+                if (SettingsHandler.Instance.IDs == null)
+                    SettingsHandler.Instance.IDs = new IDs();
+
                 SettingsHandler.Instance.IDs.ReactionRoleMessageId = message.Id;
                 SettingsHandler.Instance.SaveSettings();
 
-                // Create an array of emojis
-                var emojis = new IEmote[] {
-                Emote.Parse("<:GachaUpdates:1343843757623349369>"), //Gacha Updates
-                Emote.Parse("<:GameUpdates:1343843759540015104>"), //Game Updates
-                Emote.Parse("<:Weeb:1343843763105038457>"), //WeebII
-                new Emoji("❤️"), // Red Heart
-                new Emoji("💙"), // Blue Heart
-                new Emoji("💜"), // Purple Heart
-                new Emoji("\U0001f5a4"), // Black Heart
-                new Emoji("💛"), // Yellow Heart
-                new Emoji("💚"), // Green Heart
-                new Emoji("\U0001f9e1"), // Orange Heart
-                new Emoji("\U0001f90e"), // Brown Heart
-                new Emoji("\U0001f90d"), // White Heart
-                new Emoji("\U0001fa77"), // Pink Heart
-                new Emoji("\U0001fa76"), // Grey Heart
-                new Emoji("\U0001fa75") // Light Blue Heart
-            };
+                await message.AddReactionsAsync(emotes.ToArray());
 
-                // Add all reactions at once
-                await message.AddReactionsAsync(emojis);
-                await FollowupAsync("Reaction Roles have been made.", ephemeral: true);
+                await FollowupAsync("Reaction Roles have been set up.", ephemeral: true);
                 await MasterUtilities.DelayAndDeleteResponseAsync(Context);
-
-            }catch(Exception ex) {
+            } catch (Exception ex) {
                 Console.WriteLine(ex.ToString());
-                await FollowupAsync("An error occured. Command failed.");
+                await FollowupAsync("An error occurred. Command failed.");
                 await MasterUtilities.DelayAndDeleteResponseAsync(Context);
             }
-
         }
 
         [SlashCommand("add_reaction_roles", "Edit the reaction roles embed message to add a new role.")]
         [RequireUserPermission(GuildPermission.Administrator)]
         public async Task EditReactionRoles([Summary(description: "Select an emoji for the role")] string selectedEmoji, [Summary(description: "Select a role")] SocketRole role) {
+
             await DeferAsync();
 
-            var channel = Context.Channel;
-            var messageId = SettingsHandler.Instance.IDs.ReactionRoleMessageId;
-            var message = await channel.GetMessageAsync(messageId) as IUserMessage;
+            var channel = Context.Channel; 
 
-            if (message == null) {
+            if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
                 await FollowupAsync("Reaction roles message not found.", ephemeral: true);
                 return;
             }
+
+            var messageId = SettingsHandler.Instance.IDs.ReactionRoleMessageId;
+            IUserMessage message = (IUserMessage)await channel.GetMessageAsync(messageId);
+
+            //if (await channel.GetMessageAsync(messageId) is not IUserMessage message) {
+            //    await FollowupAsync("Reaction roles message not found.", ephemeral: true);
+            //    return;
+            //}
 
             var embed = message.Embeds.FirstOrDefault();
             if (embed == null) {
@@ -160,47 +160,80 @@ namespace Lyuze.Core.Modules {
             var newEmbed = new EmbedBuilder()
                 .WithTitle(embed.Title)
                 .WithDescription(newDescription)
-                .WithColor(embed.Color.Value)
+                .WithColor(embed.Color!.Value)
                 .WithImageUrl(embed.Image?.Url)
                 .Build();
 
             await message.ModifyAsync(msg => msg.Embed = newEmbed);
 
-            // Add the new reaction
-            var emote = new Emoji(selectedEmoji);
+            // Try parsing emoji (can be custom emote or Unicode)
+            IEmote emote;
+            if (Emote.TryParse(selectedEmoji, out var parsedEmote)) {
+                emote = parsedEmote;
+            } else {
+                emote = new Emoji(selectedEmoji);
+            }
+
             await message.AddReactionAsync(emote);
 
-            // Register the new reaction role
+            // Register the new reaction role in handler and save to JSON
             _reactionRoleHandler.AddReactionRole(selectedEmoji, role.Id);
+
+            SettingsHandler.Instance.ReactionRoles.Add(new ReactionRoleEntry { Emoji = selectedEmoji, RoleId = role.Id });
+            SettingsHandler.Instance.SaveSettings();
 
             await FollowupAsync("Reaction role has been added and embed updated.", ephemeral: true);
         }
 
+
         [SlashCommand("add_bot_reaction", "Use this command to ONLY add a new reaction, to setup a reaction role use add_reaction_roles")]
         [RequireUserPermission(GuildPermission.Administrator)]
-        public async Task AddReactionRole([Summary(description: "Select an emoji for the role")] string selectedEmoji, [Summary(description: "Select a role")] SocketRole role) {
+        public async Task AddReactionRole(
+            [Summary(description: "Select an emoji for the role")] string selectedEmoji,
+            [Summary(description: "Select a role")] SocketRole role
+        ) {
             await DeferAsync();
 
             try {
+                if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
+                    Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                    return;
+                }
 
                 var channel = Context.Channel;
                 var messageId = SettingsHandler.Instance.IDs.ReactionRoleMessageId;
                 var message = await channel.GetMessageAsync(messageId) as IUserMessage;
 
+                if (message == null) {
+                    await FollowupAsync("Reaction role message not found.", ephemeral: true);
+                    return;
+                }
+
+                // Add the reaction to the message
                 var emote = new Emoji(selectedEmoji);
                 await message.AddReactionAsync(emote);
+
                 // Register the new reaction role
                 _reactionRoleHandler.AddReactionRole(selectedEmoji, role.Id);
 
-                await FollowupAsync("Reaction has been added.", ephemeral: true);
+                // Save to settings
+                SettingsHandler.Instance.ReactionRoles.Add(new ReactionRoleEntry {
+                    Emoji = selectedEmoji,
+                    RoleId = role.Id
+                });
+
+                SettingsHandler.Instance.SaveSettings();
+
+                await FollowupAsync("Reaction has been added and saved.", ephemeral: true);
                 await MasterUtilities.DelayAndDeleteResponseAsync(Context);
 
-            } catch(Exception ex) {
-                Console.WriteLine(ex.Message.ToString());
-                await FollowupAsync($"An error has occured: {ex.Message.ToString()}");
+            } catch (Exception ex) {
+                Console.WriteLine(ex.ToString());
+                await FollowupAsync($"An error has occurred: {ex.Message}");
                 await MasterUtilities.DelayAndDeleteResponseAsync(Context);
             }
         }
+
 
     }
 }

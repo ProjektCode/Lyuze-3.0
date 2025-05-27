@@ -1,11 +1,9 @@
 ﻿using Newtonsoft.Json;
 
 namespace Lyuze.Core.Handlers {
-
     public partial class SettingsHandler {
-
         [JsonProperty("_Discord")]
-        public required _Discord Discord { get; set; } = new _Discord {
+        public _Discord Discord { get; set; } = new _Discord {
             Name = "Default Discord Name",
             Token = "Default Discord Token",
             GuildId = 0
@@ -19,6 +17,7 @@ namespace Lyuze.Core.Handlers {
 
         [JsonProperty("Image Links")]
         public List<Uri>? ImageLinks { get; set; }
+
         [JsonProperty("Profile Banners")]
         public List<Uri>? ProfileBanners { get; set; }
 
@@ -31,68 +30,37 @@ namespace Lyuze.Core.Handlers {
         [JsonProperty(nameof(Status))]
         public List<string>? Status { get; set; }
 
+        [JsonProperty(nameof(ReactionRoles))]
+        public List<ReactionRoleEntry> ReactionRoles { get; set; } = [];
+
         [JsonProperty(nameof(Database), NullValueHandling = NullValueHandling.Ignore)]
         public Database? Database { get; set; }
 
         private static readonly Lazy<SettingsHandler> _instance = new(() => {
             var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            var filePath = $@"{basePath}Resources\Settings\settings.json";
-
-            if (File.Exists(filePath)) {
-                var json = File.ReadAllText(filePath);
-                var settings = JsonConvert.DeserializeObject<SettingsHandler>(json);
-                return settings ?? new SettingsHandler {
-                    Discord = new _Discord {
-                        Name = "Default Discord Name",
-                        Token = "Default Discord Token",
-                        GuildId = 0
-                    }
-                };
-            } else {
-                var settings = new SettingsHandler {
-                    Discord = new _Discord {
-                        Name = "Default Discord Name",
-                        Token = "Default Discord Token",
-                        GuildId = 0
-                    }
-                };
-                SaveSettings(settings, filePath);
-                return settings;
-            }
+            var filePath = Path.Combine(basePath, "Resources", "Settings", "settings.json");
+            return LoadFromFile(filePath);
         });
 
         public static SettingsHandler Instance => _instance.Value;
 
-        public static SettingsHandler Data() {
-            var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            var filePath = $@"{basePath}Resources\Settings\settings.json";
-
+        // Optional utility method for manual data loading (private)
+        private static SettingsHandler LoadFromFile(string filePath) {
             if (File.Exists(filePath)) {
                 var json = File.ReadAllText(filePath);
                 var settings = JsonConvert.DeserializeObject<SettingsHandler>(json);
-                return settings ?? new SettingsHandler {
-                    Discord = new _Discord {
-                        Name = "Default Discord Name",
-                        Token = "Default Discord Token",
-                        GuildId = 0
-                    }
-                };
+                return settings ?? new SettingsHandler();
             } else {
-                var settings = new SettingsHandler {
-                    Discord = new _Discord {
-                        Name = "Default Discord Name",
-                        Token = "Default Discord Token",
-                        GuildId = 0
-                    }
-                };
+                var settings = new SettingsHandler();
                 SaveSettings(settings, filePath);
                 return settings;
             }
         }
 
+
         public void SaveSettings() {
             var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            var filePath = $@"{basePath}Resources\Settings\settings.json";
+            var filePath = Path.Combine(basePath, "Resources", "Settings", "settings.json");
             SaveSettings(this, filePath);
         }
 
@@ -100,10 +68,11 @@ namespace Lyuze.Core.Handlers {
             var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
             File.WriteAllText(filePath, json);
         }
-
     }
 
-        public partial class ApIs {
+    // Supporting classes below
+
+    public partial class ApIs {
         [JsonProperty(nameof(Tenor))]
         public string? Tenor { get; set; }
 
@@ -154,9 +123,17 @@ namespace Lyuze.Core.Handlers {
         public ulong ReactionRoleMessageId { get; set; }
     }
 
+    // New class for reaction role entries:
+    public class ReactionRoleEntry {
+        [JsonProperty(nameof(Emoji))]
+        public string Emoji { get; set; } = null!;
+
+        [JsonProperty(nameof(RoleId))]
+        public ulong RoleId { get; set; }
+    }
+
     public partial class Database {
         [JsonProperty("MongoDB")]
         public string? MongoDb { get; set; }
     }
-
 }
