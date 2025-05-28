@@ -1,15 +1,15 @@
-﻿using Discord;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Discord;
 using Discord.WebSocket;
 using Discord.Interactions;
 using Discord.Net.Providers.WS4Net;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Lyuze.Core.Handlers;
-using Microsoft.Extensions.Logging;
 using Lyuze.Core.Services;
-using Lyuze.Core.Database.Services;
-using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database;
+using Lyuze.Core.Database.Model;
+using Lyuze.Core.Database.Services;
 
 namespace Lyuze {
     public class Program {

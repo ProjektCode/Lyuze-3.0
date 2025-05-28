@@ -7,7 +7,6 @@ using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
 using Lyuze.Core.Handlers;
 
 namespace Lyuze.Core.Database.Model {
@@ -15,6 +14,7 @@ namespace Lyuze.Core.Database.Model {
         [BsonId]
         [BsonRepresentation(BsonType.Int64)]
         public required ulong DiscordID { get; set; }
+        public string UserName { get; set; } = string.Empty;
         public int Level {  get; set; }
         public int XP { get; set; }
         public string Background { get; set; } = string.Empty;
@@ -22,15 +22,16 @@ namespace Lyuze.Core.Database.Model {
         public string AboutMe { get; set; } = string.Empty;
         public bool LevelNotify { get; set; }
         public int InfractionCount {  get; set; }
-        public List<String>? InfranctionMessages { get; set; }
+        public List<String> InfranctionMessages { get; set; } = new List<String>();
     }
 
     public class Player {
-        public static DatabaseContext? Db;
+        public static DatabaseContext Db { get; set; } = null!;
 
         public static void Initialize(DatabaseContext dbCtx) {
-            Db = dbCtx;
+            Db = dbCtx ?? throw new ArgumentNullException(nameof(dbCtx));
         }
+
 
         public static readonly Random random = new();
 
@@ -42,6 +43,7 @@ namespace Lyuze.Core.Database.Model {
 
             PlayerModel player = new() {
                 DiscordID = user.Id,
+                UserName = user.Username,
                 Level = 1,
                 XP = 1,
                 Background = SettingsHandler.Instance.ProfileBanners[num].AbsoluteUri,
@@ -51,6 +53,8 @@ namespace Lyuze.Core.Database.Model {
                 InfractionCount = 0,
                 InfranctionMessages = messages
             };
+
+            if(Db == null) return;
             await Db.playerCollection.InsertOneAsync(player);
         }
 
@@ -69,6 +73,7 @@ namespace Lyuze.Core.Database.Model {
 
         public static async Task UpdateUserAsync(SocketGuildUser user, PlayerModel p) {
             var filter = Builders<PlayerModel>.Filter.Eq(x => x.DiscordID, user.Id);
+            if (Db == null) return;
             await Db.playerCollection.ReplaceOneAsync(filter, p);
         }
     }

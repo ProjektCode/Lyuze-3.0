@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Lyuze.Core.Services.Images;
 using Lyuze.Core.Utilities;
 using System.Diagnostics;
 
@@ -98,6 +99,22 @@ namespace Lyuze.Core.Modules {
                 await MasterUtilities.DelayAndDeleteResponseAsync(Context);
             }
 
+        }
+
+        [SlashCommand("test", "test command")]
+        [RequireOwner]
+        public async Task TestCommand() {
+            await DeferAsync();
+
+            var user = (SocketGuildUser)Context.User;
+
+            string message = "Test main message";
+            string submsg = "Test sub message";
+
+            string imagePath = await ImageGenerator.CreateBannerImageAsync(user, message, submsg);
+            await FollowupWithFileAsync(imagePath);
+            ImageUtils.DeleteImageFile(imagePath);
+            
         }
     }
 }

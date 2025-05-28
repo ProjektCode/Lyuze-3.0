@@ -2,12 +2,7 @@
 using Discord.Commands;
 using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ZstdSharp.Unsafe;
+using Lyuze.Core.Services.Images;
 
 namespace Lyuze.Core.Database.Services {
     public class LevelingService() {
@@ -30,7 +25,7 @@ namespace Lyuze.Core.Database.Services {
             return false;
         }
 
-        public async Task LevelUp(SocketGuildUser user, SocketCommandContext ctx) {
+        public static async Task LevelUp(SocketGuildUser user, SocketCommandContext ctx) {
             PlayerModel player = await Player.GetUserAsync(user);
 
             int xp = 0;
@@ -43,7 +38,7 @@ namespace Lyuze.Core.Database.Services {
                 EmbedBuilder embed = new() { 
                         Title = $"{user.Username} Has reached level {player.Level}!",
                         Description = $"{LevelEquation(player.Level)} xp needed for the next level.",
-                        Color = Color.Red, //Change this when we add the images utility class
+                        Color = new Color(await ColorUtils.RandomColorFromUrlAsync(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())),
                         ThumbnailUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()
                 };
 

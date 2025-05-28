@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
+using Lyuze.Core.Services.Images;
 using Lyuze.Core.Utilities;
 
 namespace Lyuze.Core.Handlers {
@@ -24,25 +25,43 @@ namespace Lyuze.Core.Handlers {
             _client.MessageReceived += OnMessageReceivedAsync;
             _cmds.SlashCommandExecuted += OnSlashCommandAsync;
             _cmds.Log += OnCommandLogAsync;
-
         }
 
         private async Task OnUserJoinedAsync(SocketGuildUser user) {
             ulong? roleID = SettingsHandler.Instance.IDs?.JoinRoleId;
+            ulong? welcomeID = SettingsHandler.Instance.IDs?.WelcomeId;
 
-            if (roleID.HasValue && roleID.Value > 0) {
+            try {
 
-                try {
-                    var role = user.Guild.GetRoleAsync(roleID.Value);
-                    if (role != null) {
-                        await user.AddRoleAsync(roleID.Value);
-                        Console.WriteLine($"Assigned role 'Gamer' to {user.Username}");
+                if (roleID.HasValue && roleID.Value > 0) {
+
+                    try {
+                        var role = user.Guild.GetRoleAsync(roleID.Value);
+                        if (role != null) {
+                            await user.AddRoleAsync(roleID.Value);
+                            Console.WriteLine($"Assigned role 'Gamer' to {user.Username}");
+                        }
+
+                    } catch (Exception ex) {
+                        Console.WriteLine(ex.ToString());
                     }
 
-                } catch (Exception ex) { 
-                    Console.WriteLine(ex.ToString());
                 }
 
+                if (welcomeID.HasValue) {
+
+                    var random = new Random();
+                    var index = random.Next(SettingsHandler.Instance.WelcomeMessage.Count);
+                    string path = await ImageGenerator.CreateBannerImageAsync(user, SettingsHandler.Instance.WelcomeMessage[index], "Welcome to the server.");
+
+                    var channel = user.Guild.GetTextChannel(welcomeID.Value);
+                    if (channel != null) await channel.SendFileAsync(path);
+                    ImageUtils.DeleteImageFile(path);
+
+                }
+
+            } catch (Exception ex) {
+                Console.WriteLine($"[EventHandler] Error has occured in OnUserJoined: {ex.Message}");
             }
 
         }
