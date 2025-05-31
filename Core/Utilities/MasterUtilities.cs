@@ -27,7 +27,7 @@ namespace Lyuze.Core.Utilities {
             await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
             await context.Interaction.DeleteOriginalResponseAsync();
         }
-        public static void ReactionRoles(ReactionRolesService _reactionRoleHandler) {
+        public static async Task ReactionRolesAsync(ReactionRolesService _reactionRoleHandler) {
             try {
                 var reactionRoles = SettingsHandler.Instance.ReactionRoles;
 
@@ -37,7 +37,7 @@ namespace Lyuze.Core.Utilities {
                 }
 
                 foreach (var rr in reactionRoles) {
-                    _reactionRoleHandler.AddReactionRole(rr.Emoji, rr.RoleId);
+                    await _reactionRoleHandler.AddReactionRoleAsync(rr.Emoji, rr.RoleId);
                 }
 
                 Console.WriteLine($"[ReactionRoles] Loaded {reactionRoles.Count} reaction roles from JSON.");

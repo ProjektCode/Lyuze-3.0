@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
+using Lyuze.Core.Services;
 using Lyuze.Core.Services.Images;
 using Lyuze.Core.Utilities;
 
@@ -12,11 +13,13 @@ namespace Lyuze.Core.Handlers {
         private readonly DiscordSocketClient _client;
         private readonly InteractionService _cmds;
         private readonly LevelingService _lvlService;
+        private readonly ILoggingService _logger;
 
-        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService) {
+        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, ILoggingService logger) {
             _client = client;
             _cmds = cmds;
             _lvlService = levelingService;
+            _logger = logger;
 
             //Register Events
             _client.UserJoined += OnUserJoinedAsync;
@@ -66,8 +69,8 @@ namespace Lyuze.Core.Handlers {
 
         }
 
-        private Task OnLogAsync(LogMessage msg) {
-            Console.WriteLine(msg.Message);
+        private async Task<Task> OnLogAsync(LogMessage msg) {
+            await _logger.LogAsync(msg.Source, msg.Severity, msg.Message);
             return Task.CompletedTask;
         }
 

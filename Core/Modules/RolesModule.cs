@@ -177,7 +177,7 @@ namespace Lyuze.Core.Modules {
             await message.AddReactionAsync(emote);
 
             // Register the new reaction role in handler and save to JSON
-            _reactionRoleHandler.AddReactionRole(selectedEmoji, role.Id);
+            await _reactionRoleHandler.AddReactionRoleAsync(selectedEmoji, role.Id);
 
             SettingsHandler.Instance.ReactionRoles.Add(new ReactionRoleEntry { Emoji = selectedEmoji, RoleId = role.Id });
             await SettingsHandler.Instance.SaveSettingsAsync();
@@ -214,7 +214,7 @@ namespace Lyuze.Core.Modules {
                 await message.AddReactionAsync(emote);
 
                 // Register the new reaction role
-                _reactionRoleHandler.AddReactionRole(selectedEmoji, role.Id);
+                await _reactionRoleHandler.AddReactionRoleAsync(selectedEmoji, role.Id);
 
                 // Save to settings
                 SettingsHandler.Instance.ReactionRoles.Add(new ReactionRoleEntry {

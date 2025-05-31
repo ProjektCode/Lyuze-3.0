@@ -1,36 +1,34 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Lyuze.Core.Handlers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Lyuze.Core.Services {
     public class ReactionRolesService {
         private readonly DiscordSocketClient _client;
+        private readonly ILoggingService _logger;
         private readonly Dictionary<ulong, Dictionary<string, ulong>> _reactionRoles = [];
         private readonly ulong _roleId = 1343897392293875753;
         private readonly Timer _timer;
         private readonly Random _random = new();
 
-        public ReactionRolesService(DiscordSocketClient client) {
+        public ReactionRolesService(DiscordSocketClient client, ILoggingService logger) {
             _client = client;
+            _logger = logger;
             _client.ReactionAdded += OnReactionAddedAsync;
             _client.ReactionRemoved += OnReactionRemovedAsync;
 
-            InitializeReactionRoles();
+            InitializeReactionRolesAsync().GetAwaiter();
 
             _timer = new Timer(ChangeRoleColor, null, TimeSpan.Zero, TimeSpan.FromMinutes(45));
         }
 
         // Add a reaction-role mapping
-        public void AddReactionRole(string emoji, ulong roleId) {
+        public async Task AddReactionRoleAsync(string emoji, ulong roleId) {
             try {
                 var settings = SettingsHandler.LoadAsync();
                 if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
-                    Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                    //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                    await _logger.LogCriticalAsync("roles", "Roles message not found");
                     return;
                 }
 
@@ -43,7 +41,8 @@ namespace Lyuze.Core.Services {
 
                 value[emoji] = roleId;
             } catch (Exception ex) {
-                Console.WriteLine($"[ReactionRoleHandler] AddReactionRole Exception: {ex}");
+                //Console.WriteLine($"[ReactionRoleHandler] AddReactionRole Exception: {ex}");
+                await _logger.LogCriticalAsync("roles", "Error has occurd", ex);
             }
         }
 
@@ -51,7 +50,8 @@ namespace Lyuze.Core.Services {
             try {
                 if (reaction.User.IsSpecified && !reaction.User.Value.IsBot) {
                     if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
-                        Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                        //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                        await _logger.LogCriticalAsync("roles", "Roles message not found");
                         return;
                     }
 
@@ -72,7 +72,8 @@ namespace Lyuze.Core.Services {
                     }
                 }
             } catch (Exception ex) {
-                Console.WriteLine($"[ReactionRoleHandler] OnReactionAddedAsync Exception: {ex}");
+                //Console.WriteLine($"[ReactionRoleHandler] OnReactionAddedAsync Exception: {ex}");
+                await _logger.LogCriticalAsync("roles", "Error has occurd", ex);
             }
         }
 
@@ -80,7 +81,8 @@ namespace Lyuze.Core.Services {
             try {
                 if (reaction.User.IsSpecified && !reaction.User.Value.IsBot) {
                     if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
-                        Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                        //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                        await _logger.LogCriticalAsync("roles", "Roles message not found");
                         return;
                     }
 
@@ -101,14 +103,16 @@ namespace Lyuze.Core.Services {
                     }
                 }
             } catch (Exception ex) {
-                Console.WriteLine($"[ReactionRoleHandler] OnReactionRemovedAsync Exception: {ex}");
+                //Console.WriteLine($"[ReactionRoleHandler] OnReactionRemovedAsync Exception: {ex}");
+                await _logger.LogCriticalAsync("roles", "Error has occurd", ex);
             }
         }
 
-        private void InitializeReactionRoles() {
+        private async Task InitializeReactionRolesAsync() {
             try {
                 if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
-                    Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                    //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                    await _logger.LogCriticalAsync("roles", "Roles message not found");
                     return;
                 }
 
@@ -116,17 +120,19 @@ namespace Lyuze.Core.Services {
 
                 if (!_reactionRoles.ContainsKey(messageId)) {
                     _reactionRoles[messageId] = [];
-                    Console.WriteLine("[ReactionRoleHandler] Initializing Reaction Roles");
+                    //Console.WriteLine("[ReactionRoleHandler] Initializing Reaction Roles");
+                    await _logger.LogInformationAsync("roles", "Initializing Reaction Roles");
                 }
 
                 // Load roles from settings (must be List<ReactionRole>)
                 foreach (var rr in SettingsHandler.Instance.ReactionRoles) {
                     var emojiKey = rr.Emoji;
-                    AddReactionRole(emojiKey, rr.RoleId);
+                    await AddReactionRoleAsync(emojiKey, rr.RoleId);
                 }
 
             } catch (Exception ex) {
-                Console.WriteLine($"[ReactionRoleHandler] InitializeReactionRoles Exception: {ex}");
+                //Console.WriteLine($"[ReactionRoleHandler] InitializeReactionRoles Exception: {ex}");
+                await _logger.LogCriticalAsync("roles", "Error has occurd", ex);
             }
         }
 
