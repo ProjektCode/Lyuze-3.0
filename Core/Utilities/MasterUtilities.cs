@@ -47,6 +47,24 @@ namespace Lyuze.Core.Utilities {
             }
         }
 
+        public uint RandomEmbedColor() {
+            var random = new Random();
 
+            var colors = new[] {
+                "DC143C", //Crimson
+                "C3E4E8",//Light Cyan
+                "FF5733", //Light Green
+                "E6E6FA", //Lavender
+                "7289DA", //Discord Purple
+                "5865F2", //Discord Blurple
+                "D2042D", //Cherry Red
+                "8DB600", //Apple Green
+                "87CEEB"  //Sky Blue
+            };
+            string colorPicker = colors[random.Next(colors.Length)];
+            int colorInt = Convert.ToInt32(colorPicker);
+            uint colorUint = Convert.ToUInt32(colorInt);
+            return colorUint;
+        }
     }
 }

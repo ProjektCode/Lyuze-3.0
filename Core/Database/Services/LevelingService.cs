@@ -15,7 +15,7 @@ namespace Lyuze.Core.Database.Services {
             return xp;
         }
 
-        public async Task<bool> CanLevelUp(SocketGuildUser user) {
+        public static async Task<bool> CanLevelUp(SocketGuildUser user) {
             PlayerModel _player = await Player.GetUserAsync(user);
             Double needXP = LevelEquation(_player.Level);
 

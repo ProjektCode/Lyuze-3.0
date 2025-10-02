@@ -4,9 +4,10 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
-using Lyuze.Core.Services;
 using Lyuze.Core.Services.Images;
 using Lyuze.Core.Utilities;
+using Victoria;
+using Victoria.WebSocket.EventArgs;
 
 namespace Lyuze.Core.Handlers {
     public class EventHandler {
@@ -14,12 +15,14 @@ namespace Lyuze.Core.Handlers {
         private readonly InteractionService _cmds;
         private readonly LevelingService _lvlService;
         private readonly ILoggingService _logger;
+        private readonly LavaNode<LavaPlayer<LavaTrack>, LavaTrack> _lavaNode;
 
-        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, ILoggingService logger) {
+        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, ILoggingService logger, LavaNode<LavaPlayer<LavaTrack>, LavaTrack> lavaNode) {
             _client = client;
             _cmds = cmds;
             _lvlService = levelingService;
             _logger = logger;
+            _lavaNode = lavaNode;
 
             //Register Events
             _client.UserJoined += OnUserJoinedAsync;
@@ -28,7 +31,38 @@ namespace Lyuze.Core.Handlers {
             _client.MessageReceived += OnMessageReceivedAsync;
             _cmds.SlashCommandExecuted += OnSlashCommandAsync;
             _cmds.Log += OnCommandLogAsync;
+
+            _lavaNode.OnReady += OnLavaLinkReadyAsync;
+            _lavaNode.OnStats += OnStatsAsync;
         }
+
+        public async Task<Task> OnLavaLinkReadyAsync(ReadyEventArg arg) {
+            await _logger.LogInformationAsync("victoria", $"Lavalink Ready: SessionID - {arg.SessionId}");
+            return Task.CompletedTask;
+        }
+
+        public async Task<Task> OnStatsAsync(StatsEventArg arg) {
+            // Convert uptime from milliseconds (long) to TimeSpan
+            TimeSpan uptime = TimeSpan.FromMilliseconds(arg.Uptime);
+
+            // Format uptime
+            string formattedUptime = $"{(int)uptime.TotalDays}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s";
+
+            string cpuLoadPercent = (arg.Cpu.LavalinkLoad * 100).ToString("F2") + "%";
+
+            await _logger.LogInformationAsync(
+                "victoria",
+                $"Lavalink Stats:{Environment.NewLine}" +
+                $"             Players: {arg.PlayingPlayers}{Environment.NewLine}" +
+                $"             Uptime: {formattedUptime}{Environment.NewLine}" +
+                $"             CPU Load: {cpuLoadPercent}{Environment.NewLine}" +
+                $"             Memory: {arg.Memory.Free / 1024 / 1024}MB free"
+            );
+            return Task.CompletedTask;
+        }
+
+
+
 
         private async Task OnUserJoinedAsync(SocketGuildUser user) {
             ulong? roleID = SettingsHandler.Instance.IDs?.JoinRoleId;
@@ -42,11 +76,11 @@ namespace Lyuze.Core.Handlers {
                         var role = user.Guild.GetRoleAsync(roleID.Value);
                         if (role != null) {
                             await user.AddRoleAsync(roleID.Value);
-                            Console.WriteLine($"Assigned role 'Gamer' to {user.Username}");
+                            await _logger.LogInformationAsync("join", $"Assigned 'Gamer' Role to {user.Username}");
                         }
 
                     } catch (Exception ex) {
-                        Console.WriteLine(ex.ToString());
+                        await _logger.LogCriticalAsync("join", ex.Message);
                     }
 
                 }
@@ -54,7 +88,7 @@ namespace Lyuze.Core.Handlers {
                 if (welcomeID.HasValue) {
 
                     var random = new Random();
-                    var index = random.Next(SettingsHandler.Instance.WelcomeMessage.Count);
+                    int index = random.Next(SettingsHandler.Instance.WelcomeMessage.Count);
                     string path = await ImageGenerator.CreateBannerImageAsync(user, SettingsHandler.Instance.WelcomeMessage[index], "Welcome to the server.");
 
                     var channel = user.Guild.GetTextChannel(welcomeID.Value);
@@ -64,7 +98,7 @@ namespace Lyuze.Core.Handlers {
                 }
 
             } catch (Exception ex) {
-                Console.WriteLine($"[EventHandler] Error has occured in OnUserJoined: {ex.Message}");
+                await _logger.LogCriticalAsync("join", ex.Message);
             }
 
         }
@@ -81,6 +115,18 @@ namespace Lyuze.Core.Handlers {
 
         private async Task OnReadyAsync() {
             try {
+
+                if (!_lavaNode.IsConnected) {
+                    try {
+
+                        await _lavaNode.ConnectAsync();
+                        await _logger.LogInformationAsync("victoria", "Lavanode Connected");
+
+                    } catch (Exception ex) {
+                        await _logger.LogCriticalAsync("victoria", ex.Message);
+                    }
+                }
+
                 //var settings = SettingsHandler.LoadAsync();
                 await _cmds.RegisterCommandsToGuildAsync(SettingsHandler.Instance.Discord.GuildId);
 
@@ -92,23 +138,20 @@ namespace Lyuze.Core.Handlers {
                 }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(120));
 
             } catch (Exception ex) {
-                Console.WriteLine(ex.ToString());
+                await _logger.LogCriticalAsync("discord", $"OnReady: {ex.Message}");
             }
         }
 
         private async Task OnMessageReceivedAsync(SocketMessage arg) {
             try {
-                if (arg is not SocketUserMessage message)
-                    return;
 
-                if (message.Author.IsBot || message.Channel is IDMChannel)
-                    return;
+                if (arg is not SocketUserMessage message)  return;
+
+                if (message.Author.IsBot || message.Channel is IDMChannel) return;
 
                 var ctx = new SocketCommandContext(_client, message);
-                var user = ctx.User as SocketGuildUser;
 
-                if (user == null)
-                    return; // maybe DM or other channel
+                if (ctx.User is not SocketGuildUser user) return; // maybe DM or other channel
 
                 if (!await Player.HasProfileAsync(user)) {
                     await Player.CreateProfileAsync(user);
@@ -122,7 +165,7 @@ namespace Lyuze.Core.Handlers {
                     await message.Channel.SendMessageAsync($"{user.Mention} cannot send discord invites.");
                 }
             } catch (Exception ex) {
-                Console.WriteLine($"[OnMessageReceivedAsync] Error: {ex.Message}");
+                await _logger.LogCriticalAsync("discord", $"OnMessageRecieve: {ex.Message}");
             }
         }
 
@@ -130,7 +173,7 @@ namespace Lyuze.Core.Handlers {
 
         private async Task OnSlashCommandAsync(SlashCommandInfo cmdInfo, IInteractionContext ctx, Discord.Interactions.IResult result) {
             if ((!result.IsSuccess)) {
-                Console.WriteLine($"[Event Handler] Slash command {cmdInfo.Name} failed {result.ErrorReason}");
+                await _logger.LogCriticalAsync("discord", $"Slash command {cmdInfo.Name} failed {result.ErrorReason}");
                 return;
             }
 

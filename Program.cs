@@ -10,6 +10,8 @@ using Lyuze.Core.Services;
 using Lyuze.Core.Database;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
+using Victoria;
+using System.Diagnostics;
 
 namespace Lyuze {
     public class Program {
@@ -17,6 +19,7 @@ namespace Lyuze {
         public static Task Main() => MainAsync();
 
         public static async Task MainAsync() {
+            RunLavalink();
             await SettingsHandler.LoadAsync();
             var settings = SettingsHandler.Instance;
 
@@ -42,7 +45,14 @@ namespace Lyuze {
                     .AddSingleton<Core.Handlers.EventHandler>()
                     .AddSingleton<ReactionRolesService>()
                     .AddSingleton<LevelingService>()
-                    .AddLogging(x => { x.ClearProviders(); x.AddSimpleConsole(); x.SetMinimumLevel(LogLevel.Trace);})
+                    .AddLavaNode(x => {
+                            x.SelfDeaf = false;
+                            x.Hostname = "127.0.0.1";
+                            x.Port = 2333;
+                            x.Authorization = "youshallnotpass";
+                        })
+                    .AddSingleton<AudioService>()
+                    .AddLogging(x => { x.ClearProviders(); x.AddSimpleConsole(); x.SetMinimumLevel(LogLevel.Trace); x.AddFilter("Victoria.LavaNode", LogLevel.Information);})
                 ).Build();
 
             await RunAsync(host);
@@ -56,6 +66,7 @@ namespace Lyuze {
             var _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
             var _cmds = serviceProvider.GetRequiredService<InteractionService>();
             var _settings = serviceProvider.GetRequiredService<SettingsHandler>();
+            var _lavaNode = serviceProvider.GetRequiredService<LavaNode<LavaPlayer<LavaTrack>, LavaTrack>>();
             await serviceProvider.GetRequiredService<InteractionHandler>().InitAsync();
             serviceProvider.GetRequiredService<Core.Handlers.EventHandler>();
 
@@ -64,5 +75,26 @@ namespace Lyuze {
 
             await Task.Delay(Timeout.Infinite);
         }
+
+        private static async void RunLavalink() {
+            var basePath = AppDomain.CurrentDomain.BaseDirectory;
+            var lavaFolder = Path.Combine(basePath, "Resources", "Victoria");
+            var lavaJar = Path.Combine(lavaFolder, "Lavalink.jar");
+
+            if (!File.Exists(lavaJar)) {
+                Console.WriteLine($"Lavalink.jar not found at {lavaJar}");
+                return;
+            }
+
+            var process = new Process();
+            process.EnableRaisingEvents = false;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.WorkingDirectory = lavaFolder;  // ✅ use the folder, not the jar
+            process.StartInfo.FileName = "javaw";
+            process.StartInfo.Arguments = $"-jar \"{lavaJar}\"";  // ✅ pass the jar as an argument
+            process.Start();
+            await Task.Delay(4000);
+        }
+
     }
 }

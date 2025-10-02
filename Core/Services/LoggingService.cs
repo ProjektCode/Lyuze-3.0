@@ -81,6 +81,7 @@ namespace Lyuze.Core.Services {
                 "backgrounds" => "BACKG",
                 "gifs" => "GIFSS",
                 "deleted" => "DELET",
+                "join" => "JOINN",
                 _ => src
             };
         }
@@ -90,7 +91,7 @@ namespace Lyuze.Core.Services {
             LogSeverity.Debug => "DBUG",
             LogSeverity.Error => "EROR",
             LogSeverity.Info => "INFO",
-            LogSeverity.Verbose => "SETP",
+            LogSeverity.Verbose => "VERB",
             LogSeverity.Warning => "WARN",
             _ => "UNKN"
         };
