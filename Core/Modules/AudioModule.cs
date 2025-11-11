@@ -79,23 +79,23 @@ namespace Lyuze.Core.Modules {
                 return;
             }
 
-            if (searchResponse.Type == LoadType.Playlist) {
-                foreach (var track in searchResponse.Tracks)
-                    player.GetQueue().Enqueue(track);
+            //if (searchResponse.Type == LoadType.Playlist) {
+            //    foreach (var track in searchResponse.Tracks)
+            //        player.GetQueue().Enqueue(track);
 
-                var firstTrack = player.GetQueue().Dequeue();
-                await player.PlayAsync(lavaNode, firstTrack);
+            //    var firstTrack = player.GetQueue().Dequeue();
+            //    await player.PlayAsync(lavaNode, firstTrack);
 
-                await RespondAsync($"🎶 Now playing playlist **{searchResponse.Playlist.Name}** starting with **{firstTrack.Title}**");
-            } else {
-                var track = searchResponse.Tracks.First();
-                if (player.Track == null)
-                    await player.PlayAsync(lavaNode, track);
-                else
-                    player.GetQueue().Enqueue(track);
+            //    await RespondAsync($"🎶 Now playing playlist **{searchResponse.Playlist.Name}** starting with **{firstTrack.Title}**");
+            //} else {
+            //    var track = searchResponse.Tracks.First();
+            //    if (player.Track == null)
+            //        await player.PlayAsync(lavaNode, track);
+            //    else
+            //        player.GetQueue().Enqueue(track);
 
-                await RespondAsync($"🎶 Added **{track.Title}** to the queue.");
-            }
+            //    await RespondAsync($"🎶 Added **{track.Title}** to the queue.");
+            //}
         }
 
 

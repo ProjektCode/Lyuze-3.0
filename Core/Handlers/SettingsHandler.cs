@@ -40,6 +40,13 @@ namespace Lyuze.Core.Handlers {
             DatabaseName = "Default Database Name"
         };
 
+        [JsonProperty(nameof(n8n))]
+        public N8N n8n { get; set; } = new N8N {
+            WebhookUrl = string.Empty
+        };
+
+
+
         private static SettingsHandler? _instance;
         public static SettingsHandler Instance {
             get {
@@ -150,5 +157,10 @@ namespace Lyuze.Core.Handlers {
 
         [JsonProperty(nameof(PlayerCollection))]
         public required string PlayerCollection {  get; set; }
+    }
+
+    public class N8N {
+        [JsonProperty("WebhookURL")]
+        public required String WebhookUrl { get; set; }
     }
 }

@@ -45,6 +45,7 @@ namespace Lyuze {
                     .AddSingleton<Core.Handlers.EventHandler>()
                     .AddSingleton<ReactionRolesService>()
                     .AddSingleton<LevelingService>()
+                    .AddSingleton<N8nService>()
                     .AddLavaNode(x => {
                             x.SelfDeaf = false;
                             x.Hostname = "127.0.0.1";
