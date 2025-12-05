@@ -10,7 +10,6 @@ using Lyuze.Core.Services;
 using Lyuze.Core.Database;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
-using Lyuze.Core.Services.Interfaces;
 
 namespace Lyuze {
     public class Program {
@@ -28,7 +27,7 @@ namespace Lyuze {
             using IHost host = Host.CreateDefaultBuilder()
                 .ConfigureServices((_, services) =>
                     services
-                    .AddSingleton<ILoggingService, LoggingService>()
+                    .AddSingleton<LoggingService, LoggingService>()
                     .AddSingleton(_ => SettingsHandler.Instance)
                     .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig {
                         GatewayIntents = GatewayIntents.All,

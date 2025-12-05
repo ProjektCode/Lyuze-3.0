@@ -4,8 +4,8 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
+using Lyuze.Core.Services;
 using Lyuze.Core.Services.Images;
-using Lyuze.Core.Services.Interfaces;
 using Lyuze.Core.Utilities;
 
 namespace Lyuze.Core.Handlers {
@@ -13,9 +13,9 @@ namespace Lyuze.Core.Handlers {
         private readonly DiscordSocketClient _client;
         private readonly InteractionService _cmds;
         private readonly LevelingService _lvlService;
-        private readonly ILoggingService _logger;
+        private readonly LoggingService _logger;
 
-        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, ILoggingService logger) {
+        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, LoggingService logger) {
             _client = client;
             _cmds = cmds;
             _lvlService = levelingService;

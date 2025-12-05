@@ -1,13 +1,11 @@
-﻿using Discord.Interactions;
-using Lyuze.Core.Handlers;
-using System.Net.Http;
+﻿using Lyuze.Core.Handlers;
 using System.Text;
 using System.Text.Json;
 
 namespace Lyuze.Core.Services {
-    public class N8nService(ILoggingService logger, SettingsHandler settings) {
+    public class N8nService(LoggingService logger, SettingsHandler settings) {
         private readonly HttpClient _httpClient = new();
-        private readonly ILoggingService _logger = logger;
+        private readonly LoggingService _logger = logger;
         private readonly SettingsHandler _settings = settings;
 
         /// <summary>

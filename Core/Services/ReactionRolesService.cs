@@ -5,12 +5,12 @@ using Lyuze.Core.Handlers;
 namespace Lyuze.Core.Services {
     public class ReactionRolesService {
         private readonly DiscordSocketClient _client;
-        private readonly ILoggingService _logger;
+        private readonly LoggingService _logger;
         private readonly Dictionary<ulong, Dictionary<string, ulong>> _reactionRoles = [];
         private readonly ulong _roleId = 1343897392293875753;
         private readonly Random _random = new();
 
-        public ReactionRolesService(DiscordSocketClient client, ILoggingService logger) {
+        public ReactionRolesService(DiscordSocketClient client, LoggingService logger) {
             _client = client;
             _logger = logger;
             _client.ReactionAdded += OnReactionAddedAsync;

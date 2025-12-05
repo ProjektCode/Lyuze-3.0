@@ -8,9 +8,9 @@ namespace Lyuze.Core.Modules {
     [Group("n8n", "Integration commands with the n8n automation system")]
     public class N8nModule : InteractionModuleBase<SocketInteractionContext> {
         private readonly N8nService _n8nService;
-        private readonly ILoggingService _logger;
+        private readonly LoggingService _logger;
 
-        public N8nModule(N8nService n8nService, ILoggingService logger) {
+        public N8nModule(N8nService n8nService, LoggingService logger) {
             _n8nService = n8nService;
             _logger = logger;
         }

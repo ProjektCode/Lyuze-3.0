@@ -3,7 +3,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Discord.WebSocket;
 using Lyuze.Core.Handlers;
-using Lyuze.Core.Services.Interfaces;
+using Lyuze.Core.Services;
 
 namespace Lyuze.Core.Database.Model {
     public class PlayerModel {
@@ -30,7 +30,7 @@ namespace Lyuze.Core.Database.Model {
 
         public static readonly Random random = new();
 
-        public static async Task CreateProfileAsync(SocketGuildUser user, ILoggingService logger) {
+        public static async Task CreateProfileAsync(SocketGuildUser user, LoggingService logger) {
             await logger.LogInformationAsync("profile", $"Creating profile for {user}");
             int num = random.Next(SettingsHandler.Instance.ProfileBanners.Count);
 
