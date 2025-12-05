@@ -1,6 +1,6 @@
-﻿using Discord;
-using Discord.Interactions;
+﻿using Discord.Interactions;
 using Lyuze.Core.Services;
+using Lyuze.Core.Services.Interfaces;
 using Lyuze.Core.Utilities;
 
 namespace Lyuze.Core.Modules {

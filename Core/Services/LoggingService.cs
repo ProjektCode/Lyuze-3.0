@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Lyuze.Core.Services.Interfaces;
 using Pastel;
 using System.Text;
 
@@ -62,13 +63,10 @@ namespace Lyuze.Core.Services {
 
             return src.ToLower() switch {
                 "discord" => "DISCD",
-                "victoria" => "VICTR",
                 "audio" => "AUDIO",
                 "admin" => "ADMIN",
                 "gateway" => "GTWAY",
                 "blacklist" => "BLAKL",
-                "lavanode_0_socket" => "LAVAS",
-                "lavanode_0" => "LAVA#",
                 "bot" => "BOTWN",
                 "setup" => "SETUP",
                 "command" => "CMMND",

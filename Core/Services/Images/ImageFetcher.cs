@@ -1,5 +1,4 @@
 ﻿using System.Drawing;
-using System.Net;
 
 namespace Lyuze.Core.Services.Images {
     public static class ImageFetcher {

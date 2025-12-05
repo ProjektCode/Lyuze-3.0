@@ -1,9 +1,6 @@
-﻿using Discord;
-using Discord.Interactions;
+﻿using Discord.Interactions;
 using Discord.WebSocket;
-using System;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Lyuze.Core.Handlers {
     public class InteractionHandler(DiscordSocketClient client, InteractionService commands, IServiceProvider services) {

@@ -48,13 +48,13 @@ namespace Lyuze.Core.Database.Services {
             await Player.UpdateUserAsync(user, player);
         }
 
-        public async Task GiveXP(SocketGuildUser user, int xp = 1) {
+        public static async Task GiveXP(SocketGuildUser user, int xp = 1) {
             PlayerModel player = await Player.GetUserAsync(user);
             player.XP += xp;
             await Player.UpdateUserAsync(user, player);
         }
 
-        public async Task MsgCoolDownAsync(IUserMessage message, SocketCommandContext ctx, int xp = 1) { 
+        public static async Task MsgCoolDownAsync(IUserMessage message, SocketCommandContext ctx, int xp = 1) { 
             Message newMsg = new() { 
                 AuthorID = message.Author.Id,
                 Timestamp = message.Timestamp,
@@ -75,7 +75,7 @@ namespace Lyuze.Core.Database.Services {
             }
         }
 
-        public async Task LevelHelper(SocketGuildUser user, int xp, SocketCommandContext ctx) {
+        public static async Task LevelHelper(SocketGuildUser user, int xp, SocketCommandContext ctx) {
             await GiveXP(user, xp);
             if(await CanLevelUp(user)) await LevelUp(user, ctx);
         }

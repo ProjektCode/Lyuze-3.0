@@ -10,7 +10,7 @@ using Lyuze.Core.Services;
 using Lyuze.Core.Database;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
-using System.Diagnostics;
+using Lyuze.Core.Services.Interfaces;
 
 namespace Lyuze {
     public class Program {
@@ -18,7 +18,7 @@ namespace Lyuze {
         public static Task Main() => MainAsync();
 
         public static async Task MainAsync() {
-            RunLavalink();
+
             await SettingsHandler.LoadAsync();
             var settings = SettingsHandler.Instance;
 
@@ -66,26 +66,6 @@ namespace Lyuze {
             await _client.StartAsync();
 
             await Task.Delay(Timeout.Infinite);
-        }
-
-        private static async void RunLavalink() {
-            var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            var lavaFolder = Path.Combine(basePath, "Resources", "Victoria");
-            var lavaJar = Path.Combine(lavaFolder, "Lavalink.jar");
-
-            if (!File.Exists(lavaJar)) {
-                Console.WriteLine($"Lavalink.jar not found at {lavaJar}");
-                return;
-            }
-
-            var process = new Process();
-            process.EnableRaisingEvents = false;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.WorkingDirectory = lavaFolder;  // ✅ use the folder, not the jar
-            process.StartInfo.FileName = "javaw";
-            process.StartInfo.Arguments = $"-jar \"{lavaJar}\"";  // ✅ pass the jar as an argument
-            process.Start();
-            await Task.Delay(4000);
         }
 
     }

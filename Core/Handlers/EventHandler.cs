@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
 using Lyuze.Core.Services.Images;
+using Lyuze.Core.Services.Interfaces;
 using Lyuze.Core.Utilities;
 
 namespace Lyuze.Core.Handlers {
@@ -111,7 +112,7 @@ namespace Lyuze.Core.Handlers {
                 if (!await Player.HasProfileAsync(user)) {
                     await Player.CreateProfileAsync(user, _logger);
                 } else {
-                    await _lvlService.MsgCoolDownAsync(message, ctx);
+                    await LevelingService.MsgCoolDownAsync(message, ctx);
                 }
 
                 if (message.Content.Contains("https://discord.gg/", StringComparison.OrdinalIgnoreCase)
@@ -136,7 +137,7 @@ namespace Lyuze.Core.Handlers {
                 //if (Player.CheckProfileAsync((SocketGuildUser)ctx.User)) {
 
                 //}
-                await _lvlService.GiveXP(guildUser, 10);
+                await LevelingService.GiveXP(guildUser, 10);
             }
 
         }

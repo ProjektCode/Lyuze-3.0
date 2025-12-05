@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Discord.WebSocket;
 using Lyuze.Core.Handlers;
-using Microsoft.Extensions.Logging;
+using Lyuze.Core.Services.Interfaces;
 
 namespace Lyuze.Core.Database.Model {
     public class PlayerModel {
@@ -23,7 +18,7 @@ namespace Lyuze.Core.Database.Model {
         public string AboutMe { get; set; } = string.Empty;
         public bool LevelNotify { get; set; }
         public int InfractionCount {  get; set; }
-        public List<String> InfranctionMessages { get; set; } = new List<String>();
+        public List<String> InfranctionMessages { get; set; } = [];
     }
 
     public sealed class Player {

@@ -1,9 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Threading.Tasks;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Utilities;
 using Lyuze.Core.Database.Services;
