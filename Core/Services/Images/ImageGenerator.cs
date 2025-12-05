@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Lyuze.Core.Configuration;
 using System.Drawing;
 
 namespace Lyuze.Core.Services.Images {

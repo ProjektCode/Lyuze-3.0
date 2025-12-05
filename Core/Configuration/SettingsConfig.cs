@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 
-namespace Lyuze.Core.Handlers {
-    public class SettingsHandler {
+namespace Lyuze.Core.Configuration {
+    public class SettingsConfig {
         [JsonProperty("_Discord")]
         public _Discord Discord { get; set; } = new _Discord {
             Name = "Default Discord Name",
@@ -40,15 +40,15 @@ namespace Lyuze.Core.Handlers {
             DatabaseName = "Default Database Name"
         };
 
-        [JsonProperty(nameof(n8n))]
-        public N8N n8n { get; set; } = new N8N {
+        [JsonProperty(nameof(N8n))]
+        public N8N N8n { get; set; } = new N8N {
             WebhookUrl = string.Empty
         };
 
 
 
-        private static SettingsHandler? _instance;
-        public static SettingsHandler Instance {
+        private static SettingsConfig? _instance;
+        public static SettingsConfig Instance {
             get {
                 if (_instance == null)
                     throw new InvalidOperationException("Settings not loaded yet.");
@@ -57,17 +57,17 @@ namespace Lyuze.Core.Handlers {
             private set => _instance = value;
         }
 
-        public static async Task<SettingsHandler> LoadAsync() {
+        public static async Task<SettingsConfig> LoadAsync() {
             var basePath = AppDomain.CurrentDomain.BaseDirectory;
             var filePath = Path.Combine(basePath, "Resources", "Settings", "settings.json");
 
-            SettingsHandler settings;
+            SettingsConfig settings;
 
             if (File.Exists(filePath)) {
                 var json = await File.ReadAllTextAsync(filePath);
-                settings = JsonConvert.DeserializeObject<SettingsHandler>(json) ?? new SettingsHandler();
+                settings = JsonConvert.DeserializeObject<SettingsConfig>(json) ?? new SettingsConfig();
             } else {
-                settings = new SettingsHandler();
+                settings = new SettingsConfig();
                 await SaveSettingsAsync(settings, filePath);
             }
 
@@ -76,7 +76,7 @@ namespace Lyuze.Core.Handlers {
             return Instance;
         }
 
-        private static async Task SaveSettingsAsync(SettingsHandler settings, string filePath) {
+        private static async Task SaveSettingsAsync(SettingsConfig settings, string filePath) {
             var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
             await File.WriteAllTextAsync(filePath, json);
         }
@@ -153,14 +153,14 @@ namespace Lyuze.Core.Handlers {
         public required string MongoDb { get; set; }
 
         [JsonProperty("Database")]
-        public required string DatabaseName {  get; set; }
+        public required string DatabaseName { get; set; }
 
         [JsonProperty(nameof(PlayerCollection))]
-        public required string PlayerCollection {  get; set; }
+        public required string PlayerCollection { get; set; }
     }
 
     public class N8N {
         [JsonProperty("WebhookURL")]
-        public required String WebhookUrl { get; set; }
+        public required string WebhookUrl { get; set; }
     }
 }

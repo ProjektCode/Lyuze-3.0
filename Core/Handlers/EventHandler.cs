@@ -2,9 +2,10 @@
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Lyuze.Core.Configuration;
 using Lyuze.Core.Database.Model;
-using Lyuze.Core.Database.Services;
 using Lyuze.Core.Services;
+using Lyuze.Core.Services.Database;
 using Lyuze.Core.Services.Images;
 using Lyuze.Core.Utilities;
 
@@ -32,8 +33,8 @@ namespace Lyuze.Core.Handlers {
         }
 
         private async Task OnUserJoinedAsync(SocketGuildUser user) {
-            ulong? roleID = SettingsHandler.Instance.IDs?.JoinRoleId;
-            ulong? welcomeID = SettingsHandler.Instance.IDs?.WelcomeId;
+            ulong? roleID = SettingsConfig.Instance.IDs?.JoinRoleId;
+            ulong? welcomeID = SettingsConfig.Instance.IDs?.WelcomeId;
 
             try {
 
@@ -55,8 +56,8 @@ namespace Lyuze.Core.Handlers {
                 if (welcomeID.HasValue) {
 
                     var random = new Random();
-                    int index = random.Next(SettingsHandler.Instance.WelcomeMessage.Count);
-                    string path = await ImageGenerator.CreateBannerImageAsync(user, SettingsHandler.Instance.WelcomeMessage[index], "Welcome to the server.");
+                    int index = random.Next(SettingsConfig.Instance.WelcomeMessage.Count);
+                    string path = await ImageGenerator.CreateBannerImageAsync(user, SettingsConfig.Instance.WelcomeMessage[index], "Welcome to the server.");
 
                     var channel = user.Guild.GetTextChannel(welcomeID.Value);
                     if (channel != null) await channel.SendFileAsync(path);
@@ -84,10 +85,10 @@ namespace Lyuze.Core.Handlers {
             try {
 
                 //var settings = SettingsHandler.LoadAsync();
-                await _cmds.RegisterCommandsToGuildAsync(SettingsHandler.Instance.Discord.GuildId);
+                await _cmds.RegisterCommandsToGuildAsync(SettingsConfig.Instance.Discord.GuildId);
 
                 await _client.SetStatusAsync(UserStatus.Online);
-                var i = MasterUtilities.Instance.RandomListIndex(SettingsHandler.Instance.Status ?? ["Online", "Idle", "Do Not Disturb"]);
+                var i = MasterUtilities.Instance.RandomListIndex(SettingsConfig.Instance.Status ?? ["Online", "Idle", "Do Not Disturb"]);
                 var t = new Timer(async __ => { 
                     await _client.SetGameAsync(MasterUtilities.Instance.sList.ElementAtOrDefault(i), type: ActivityType.Listening);
                     i = i + 1 == MasterUtilities.Instance.sList.Count ? 0 : i + 1;

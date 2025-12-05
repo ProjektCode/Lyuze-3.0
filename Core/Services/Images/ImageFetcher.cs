@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using Lyuze.Core.Configuration;
+using System.Drawing;
 
 namespace Lyuze.Core.Services.Images {
     public static class ImageFetcher {

@@ -9,7 +9,8 @@ using Lyuze.Core.Handlers;
 using Lyuze.Core.Services;
 using Lyuze.Core.Database;
 using Lyuze.Core.Database.Model;
-using Lyuze.Core.Database.Services;
+using Lyuze.Core.Configuration;
+using Lyuze.Core.Services.Database;
 
 namespace Lyuze {
     public class Program {
@@ -18,8 +19,8 @@ namespace Lyuze {
 
         public static async Task MainAsync() {
 
-            await SettingsHandler.LoadAsync();
-            var settings = SettingsHandler.Instance;
+            await SettingsConfig.LoadAsync();
+            var settings = SettingsConfig.Instance;
 
             var DbCtx = new DatabaseContext(settings);
             Player.Initialize(DbCtx);
@@ -28,7 +29,7 @@ namespace Lyuze {
                 .ConfigureServices((_, services) =>
                     services
                     .AddSingleton<LoggingService, LoggingService>()
-                    .AddSingleton(_ => SettingsHandler.Instance)
+                    .AddSingleton(_ => SettingsConfig.Instance)
                     .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig {
                         GatewayIntents = GatewayIntents.All,
                         WebSocketProvider = WS4NetProvider.Instance,
@@ -57,7 +58,7 @@ namespace Lyuze {
 
             var _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
             var _cmds = serviceProvider.GetRequiredService<InteractionService>();
-            var _settings = serviceProvider.GetRequiredService<SettingsHandler>();
+            var _settings = serviceProvider.GetRequiredService<SettingsConfig>();
             await serviceProvider.GetRequiredService<InteractionHandler>().InitAsync();
             serviceProvider.GetRequiredService<Core.Handlers.EventHandler>();
 

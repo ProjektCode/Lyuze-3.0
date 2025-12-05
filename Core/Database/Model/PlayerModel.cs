@@ -2,8 +2,8 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Discord.WebSocket;
-using Lyuze.Core.Handlers;
 using Lyuze.Core.Services;
+using Lyuze.Core.Configuration;
 
 namespace Lyuze.Core.Database.Model {
     public class PlayerModel {
@@ -32,7 +32,7 @@ namespace Lyuze.Core.Database.Model {
 
         public static async Task CreateProfileAsync(SocketGuildUser user, LoggingService logger) {
             await logger.LogInformationAsync("profile", $"Creating profile for {user}");
-            int num = random.Next(SettingsHandler.Instance.ProfileBanners.Count);
+            int num = random.Next(SettingsConfig.Instance.ProfileBanners.Count);
 
             List<string> messages = [];
 
@@ -41,7 +41,7 @@ namespace Lyuze.Core.Database.Model {
                 UserName = user.Username,
                 Level = 1,
                 XP = 1,
-                Background = SettingsHandler.Instance.ProfileBanners[num].AbsoluteUri,
+                Background = SettingsConfig.Instance.ProfileBanners[num].AbsoluteUri,
                 AboutMe = "No About me set.",
                 LevelNotify = true,
                 PublicProfile = true,

@@ -2,7 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace Lyuze.Core.Handlers {
+namespace Lyuze.Core.Utilities.Serialization {
 
     internal static class Converter {
         public readonly static JsonSerializerSettings Settings = new() {

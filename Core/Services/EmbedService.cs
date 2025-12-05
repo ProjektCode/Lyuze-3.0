@@ -3,15 +3,15 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Utilities;
-using Lyuze.Core.Database.Services;
 using Lyuze.Core.Services.Images;
+using Lyuze.Core.Services.Database;
 
-namespace Lyuze.Core.Handlers {
-    public sealed class EmbedHandler {
+namespace Lyuze.Core.Services {
+    public sealed class EmbedService {
         private readonly MasterUtilities _utils;
 
         // Inject dependencies via constructor (better for testing and flexibility)
-        public EmbedHandler(MasterUtilities utils) {
+        public EmbedService(MasterUtilities utils) {
             _utils = utils ?? throw new ArgumentNullException(nameof(utils));
         }
 

@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Lyuze.Core.Handlers;
+using Lyuze.Core.Configuration;
 using Lyuze.Core.Services;
 using Lyuze.Core.Utilities;
 using System.Data;
@@ -87,7 +87,7 @@ namespace Lyuze.Core.Modules {
                 var lines = new List<string>();
                 var emotes = new List<IEmote>();
 
-                foreach (var entry in SettingsHandler.Instance.ReactionRoles) {
+                foreach (var entry in SettingsConfig.Instance.ReactionRoles) {
                     string roleName = guild.GetRole(entry.RoleId)?.Name ?? "(unknown role)";
                     lines.Add($"{entry.Emoji} - {roleName}");
 
@@ -111,11 +111,11 @@ namespace Lyuze.Core.Modules {
 
                 var message = await Context.Channel.SendMessageAsync(embed: embed);
 
-                if (SettingsHandler.Instance.IDs == null)
-                    SettingsHandler.Instance.IDs = new IDs();
+                if (SettingsConfig.Instance.IDs == null)
+                    SettingsConfig.Instance.IDs = new IDs();
 
-                SettingsHandler.Instance.IDs.ReactionRoleMessageId = message.Id;
-                await SettingsHandler.Instance.SaveSettingsAsync();
+                SettingsConfig.Instance.IDs.ReactionRoleMessageId = message.Id;
+                await SettingsConfig.Instance.SaveSettingsAsync();
 
                 await message.AddReactionsAsync(emotes.ToArray());
 
@@ -136,12 +136,12 @@ namespace Lyuze.Core.Modules {
 
             var channel = Context.Channel; 
 
-            if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
+            if (SettingsConfig.Instance.IDs?.ReactionRoleMessageId == null) {
                 await FollowupAsync("Reaction roles message not found.", ephemeral: true);
                 return;
             }
 
-            var messageId = SettingsHandler.Instance.IDs.ReactionRoleMessageId;
+            var messageId = SettingsConfig.Instance.IDs.ReactionRoleMessageId;
             IUserMessage message = (IUserMessage)await channel.GetMessageAsync(messageId);
 
             //if (await channel.GetMessageAsync(messageId) is not IUserMessage message) {
@@ -179,8 +179,8 @@ namespace Lyuze.Core.Modules {
             // Register the new reaction role in handler and save to JSON
             await _reactionRoleHandler.AddReactionRoleAsync(selectedEmoji, role.Id);
 
-            SettingsHandler.Instance.ReactionRoles.Add(new ReactionRoleEntry { Emoji = selectedEmoji, RoleId = role.Id });
-            await SettingsHandler.Instance.SaveSettingsAsync();
+            SettingsConfig.Instance.ReactionRoles.Add(new ReactionRoleEntry { Emoji = selectedEmoji, RoleId = role.Id });
+            await SettingsConfig.Instance.SaveSettingsAsync();
 
             await FollowupAsync("Reaction role has been added and embed updated.", ephemeral: true);
         }
@@ -195,13 +195,13 @@ namespace Lyuze.Core.Modules {
             await DeferAsync();
 
             try {
-                if (SettingsHandler.Instance.IDs?.ReactionRoleMessageId == null) {
+                if (SettingsConfig.Instance.IDs?.ReactionRoleMessageId == null) {
                     Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
                     return;
                 }
 
                 var channel = Context.Channel;
-                var messageId = SettingsHandler.Instance.IDs.ReactionRoleMessageId;
+                var messageId = SettingsConfig.Instance.IDs.ReactionRoleMessageId;
                 var message = await channel.GetMessageAsync(messageId) as IUserMessage;
 
                 if (message == null) {
@@ -217,12 +217,12 @@ namespace Lyuze.Core.Modules {
                 await _reactionRoleHandler.AddReactionRoleAsync(selectedEmoji, role.Id);
 
                 // Save to settings
-                SettingsHandler.Instance.ReactionRoles.Add(new ReactionRoleEntry {
+                SettingsConfig.Instance.ReactionRoles.Add(new ReactionRoleEntry {
                     Emoji = selectedEmoji,
                     RoleId = role.Id
                 });
 
-                await SettingsHandler.Instance.SaveSettingsAsync();
+                await SettingsConfig.Instance.SaveSettingsAsync();
 
                 await FollowupAsync("Reaction has been added and saved.", ephemeral: true);
                 await MasterUtilities.DelayAndDeleteResponseAsync(Context);

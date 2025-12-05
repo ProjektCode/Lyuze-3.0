@@ -1,19 +1,19 @@
-﻿using Lyuze.Core.Handlers;
+﻿using Lyuze.Core.Configuration;
 using System.Text;
 using System.Text.Json;
 
 namespace Lyuze.Core.Services {
-    public class N8nService(LoggingService logger, SettingsHandler settings) {
+    public class N8nService(LoggingService logger, SettingsConfig settings) {
         private readonly HttpClient _httpClient = new();
         private readonly LoggingService _logger = logger;
-        private readonly SettingsHandler _settings = settings;
+        private readonly SettingsConfig _settings = settings;
 
         /// <summary>
         /// Sends an anime tracking payload to n8n.
         /// </summary>
         public async Task<bool> SendAnimeTrackingAsync(int id, ulong ChannelID, bool deleteRow = false) {
             try {
-                string webhookUrlString = _settings.n8n?.WebhookUrl ?? string.Empty;
+                string webhookUrlString = _settings.N8n?.WebhookUrl ?? string.Empty;
 
                 if (string.IsNullOrWhiteSpace(webhookUrlString) ||
                     !Uri.TryCreate(webhookUrlString, UriKind.Absolute, out var webhookUri)) {
@@ -49,7 +49,7 @@ namespace Lyuze.Core.Services {
 
         public async Task<bool> SendActionAsync(string action, ulong ChannelID) {
             try {
-                string webhookUrlString = _settings.n8n?.WebhookUrl ?? string.Empty;
+                string webhookUrlString = _settings.N8n?.WebhookUrl ?? string.Empty;
 
                 if (string.IsNullOrWhiteSpace(webhookUrlString) ||
                     !Uri.TryCreate(webhookUrlString, UriKind.Absolute, out var webhookUri)) {

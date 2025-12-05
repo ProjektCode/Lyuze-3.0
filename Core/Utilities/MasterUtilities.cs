@@ -1,11 +1,11 @@
 ﻿using Discord;
-using Lyuze.Core.Handlers;
+using Lyuze.Core.Configuration;
 using Lyuze.Core.Services;
 
 namespace Lyuze.Core.Utilities {
     public class MasterUtilities {
         private readonly Random rand = new();
-        public List<string> sList = SettingsHandler.Instance.Status ?? ["Online", "Idle", "Do Not Disturb"];
+        public List<string> sList = SettingsConfig.Instance.Status ?? ["Online", "Idle", "Do Not Disturb"];
 
 
         // Static instance of the class
@@ -29,7 +29,7 @@ namespace Lyuze.Core.Utilities {
         }
         public static async Task ReactionRolesAsync(ReactionRolesService _reactionRoleHandler) {
             try {
-                var reactionRoles = SettingsHandler.Instance.ReactionRoles;
+                var reactionRoles = SettingsConfig.Instance.ReactionRoles;
 
                 if (reactionRoles == null || reactionRoles.Count == 0) {
                     Console.WriteLine("[ReactionRoles] No reaction roles found in settings.");

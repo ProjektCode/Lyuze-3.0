@@ -4,20 +4,20 @@ using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Services.Images;
 
-namespace Lyuze.Core.Database.Services {
+namespace Lyuze.Core.Services.Database {
     public class LevelingService() {
 
         private static readonly List<Message> MsgList = [];
         private static readonly List<ulong> AuthorList = [];
 
-        public static Double LevelEquation(int lvl) {
-            Double xp = Math.Floor(Math.Round(25 * Math.Pow(lvl + 1, 2)));
+        public static double LevelEquation(int lvl) {
+            double xp = Math.Floor(Math.Round(25 * Math.Pow(lvl + 1, 2)));
             return xp;
         }
 
         public static async Task<bool> CanLevelUp(SocketGuildUser user) {
             PlayerModel _player = await Player.GetUserAsync(user);
-            Double needXP = LevelEquation(_player.Level);
+            double needXP = LevelEquation(_player.Level);
 
             if (_player.XP >= needXP) {
                 return true;
@@ -35,11 +35,11 @@ namespace Lyuze.Core.Database.Services {
             player.XP = xp;
 
             if (player.LevelNotify) {
-                EmbedBuilder embed = new() { 
-                        Title = $"{user.Username} Has reached level {player.Level}!",
-                        Description = $"{LevelEquation(player.Level)} xp needed for the next level.",
-                        Color = new Color(await ColorUtils.RandomColorFromUrlAsync(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())),
-                        ThumbnailUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()
+                EmbedBuilder embed = new() {
+                    Title = $"{user.Username} Has reached level {player.Level}!",
+                    Description = $"{LevelEquation(player.Level)} xp needed for the next level.",
+                    Color = new Color(await ColorUtils.RandomColorFromUrlAsync(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())),
+                    ThumbnailUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()
                 };
 
                 await ctx.Channel.SendMessageAsync(embed: embed.Build());
@@ -54,16 +54,16 @@ namespace Lyuze.Core.Database.Services {
             await Player.UpdateUserAsync(user, player);
         }
 
-        public static async Task MsgCoolDownAsync(IUserMessage message, SocketCommandContext ctx, int xp = 1) { 
-            Message newMsg = new() { 
+        public static async Task MsgCoolDownAsync(IUserMessage message, SocketCommandContext ctx, int xp = 1) {
+            Message newMsg = new() {
                 AuthorID = message.Author.Id,
                 Timestamp = message.Timestamp,
             };
 
             if (AuthorList.Contains(newMsg.AuthorID)) {
                 //Chek current time and see if 3 seconds have passed since last message
-               var AuthorMsg = MsgList.Find(x => x.AuthorID == newMsg.AuthorID);
-                if(AuthorMsg?.Timestamp.AddSeconds(3) !>= DateTimeOffset.Now) {
+                var AuthorMsg = MsgList.Find(x => x.AuthorID == newMsg.AuthorID);
+                if (AuthorMsg?.Timestamp.AddSeconds(3)! >= DateTimeOffset.Now) {
                     AuthorList.Remove(message.Author.Id);
                     MsgList.Remove(AuthorMsg);
                     await LevelHelper((SocketGuildUser)message.Author, xp, ctx);
@@ -77,7 +77,7 @@ namespace Lyuze.Core.Database.Services {
 
         public static async Task LevelHelper(SocketGuildUser user, int xp, SocketCommandContext ctx) {
             await GiveXP(user, xp);
-            if(await CanLevelUp(user)) await LevelUp(user, ctx);
+            if (await CanLevelUp(user)) await LevelUp(user, ctx);
         }
     }
 

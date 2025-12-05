@@ -1,5 +1,5 @@
-﻿using Lyuze.Core.Database.Model;
-using Lyuze.Core.Handlers;
+﻿using Lyuze.Core.Configuration;
+using Lyuze.Core.Database.Model;
 using MongoDB.Driver;
 
 namespace Lyuze.Core.Database {
@@ -8,9 +8,9 @@ namespace Lyuze.Core.Database {
         public readonly IMongoDatabase database;
         public readonly IMongoCollection<PlayerModel> playerCollection;
 
-        private readonly SettingsHandler settings;
+        private readonly SettingsConfig settings;
 
-        public DatabaseContext(SettingsHandler settingsHandler) {
+        public DatabaseContext(SettingsConfig settingsHandler) {
                settings = settingsHandler ?? throw new ArgumentNullException(nameof(settings));    
 
 
