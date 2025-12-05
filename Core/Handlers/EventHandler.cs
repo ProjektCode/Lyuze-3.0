@@ -6,8 +6,6 @@ using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
 using Lyuze.Core.Services.Images;
 using Lyuze.Core.Utilities;
-using Victoria;
-using Victoria.WebSocket.EventArgs;
 
 namespace Lyuze.Core.Handlers {
     public class EventHandler {
@@ -15,14 +13,12 @@ namespace Lyuze.Core.Handlers {
         private readonly InteractionService _cmds;
         private readonly LevelingService _lvlService;
         private readonly ILoggingService _logger;
-        private readonly LavaNode<LavaPlayer<LavaTrack>, LavaTrack> _lavaNode;
 
-        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, ILoggingService logger, LavaNode<LavaPlayer<LavaTrack>, LavaTrack> lavaNode) {
+        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, ILoggingService logger) {
             _client = client;
             _cmds = cmds;
             _lvlService = levelingService;
             _logger = logger;
-            _lavaNode = lavaNode;
 
             //Register Events
             _client.UserJoined += OnUserJoinedAsync;
@@ -32,37 +28,7 @@ namespace Lyuze.Core.Handlers {
             _cmds.SlashCommandExecuted += OnSlashCommandAsync;
             _cmds.Log += OnCommandLogAsync;
 
-            _lavaNode.OnReady += OnLavaLinkReadyAsync;
-            _lavaNode.OnStats += OnStatsAsync;
         }
-
-        public async Task<Task> OnLavaLinkReadyAsync(ReadyEventArg arg) {
-            await _logger.LogInformationAsync("victoria", $"Lavalink Ready: SessionID - {arg.SessionId}");
-            return Task.CompletedTask;
-        }
-
-        public async Task<Task> OnStatsAsync(StatsEventArg arg) {
-            // Convert uptime from milliseconds (long) to TimeSpan
-            TimeSpan uptime = TimeSpan.FromMilliseconds(arg.Uptime);
-
-            // Format uptime
-            string formattedUptime = $"{(int)uptime.TotalDays}d {uptime.Hours}h {uptime.Minutes}m {uptime.Seconds}s";
-
-            string cpuLoadPercent = (arg.Cpu.LavalinkLoad * 100).ToString("F2") + "%";
-
-            await _logger.LogInformationAsync(
-                "victoria",
-                $"Lavalink Stats:{Environment.NewLine}" +
-                $"             Players: {arg.PlayingPlayers}{Environment.NewLine}" +
-                $"             Uptime: {formattedUptime}{Environment.NewLine}" +
-                $"             CPU Load: {cpuLoadPercent}{Environment.NewLine}" +
-                $"             Memory: {arg.Memory.Free / 1024 / 1024}MB free"
-            );
-            return Task.CompletedTask;
-        }
-
-
-
 
         private async Task OnUserJoinedAsync(SocketGuildUser user) {
             ulong? roleID = SettingsHandler.Instance.IDs?.JoinRoleId;
@@ -116,17 +82,6 @@ namespace Lyuze.Core.Handlers {
         private async Task OnReadyAsync() {
             try {
 
-                if (!_lavaNode.IsConnected) {
-                    try {
-
-                        await _lavaNode.ConnectAsync();
-                        await _logger.LogInformationAsync("victoria", "Lavanode Connected");
-
-                    } catch (Exception ex) {
-                        await _logger.LogCriticalAsync("victoria", ex.Message);
-                    }
-                }
-
                 //var settings = SettingsHandler.LoadAsync();
                 await _cmds.RegisterCommandsToGuildAsync(SettingsHandler.Instance.Discord.GuildId);
 
@@ -154,7 +109,7 @@ namespace Lyuze.Core.Handlers {
                 if (ctx.User is not SocketGuildUser user) return; // maybe DM or other channel
 
                 if (!await Player.HasProfileAsync(user)) {
-                    await Player.CreateProfileAsync(user);
+                    await Player.CreateProfileAsync(user, _logger);
                 } else {
                     await _lvlService.MsgCoolDownAsync(message, ctx);
                 }

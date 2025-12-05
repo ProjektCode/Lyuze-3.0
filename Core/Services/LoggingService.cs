@@ -82,6 +82,7 @@ namespace Lyuze.Core.Services {
                 "gifs" => "GIFSS",
                 "deleted" => "DELET",
                 "join" => "JOINN",
+                "profile" => "PRFIL",
                 _ => src
             };
         }

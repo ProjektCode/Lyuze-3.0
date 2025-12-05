@@ -10,7 +10,6 @@ using Lyuze.Core.Services;
 using Lyuze.Core.Database;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Database.Services;
-using Victoria;
 using System.Diagnostics;
 
 namespace Lyuze {
@@ -46,13 +45,6 @@ namespace Lyuze {
                     .AddSingleton<ReactionRolesService>()
                     .AddSingleton<LevelingService>()
                     .AddSingleton<N8nService>()
-                    .AddLavaNode(x => {
-                            x.SelfDeaf = false;
-                            x.Hostname = "127.0.0.1";
-                            x.Port = 2333;
-                            x.Authorization = "youshallnotpass";
-                        })
-                    .AddSingleton<AudioService>()
                     .AddLogging(x => { x.ClearProviders(); x.AddSimpleConsole(); x.SetMinimumLevel(LogLevel.Trace); x.AddFilter("Victoria.LavaNode", LogLevel.Information);})
                 ).Build();
 
@@ -67,7 +59,6 @@ namespace Lyuze {
             var _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
             var _cmds = serviceProvider.GetRequiredService<InteractionService>();
             var _settings = serviceProvider.GetRequiredService<SettingsHandler>();
-            var _lavaNode = serviceProvider.GetRequiredService<LavaNode<LavaPlayer<LavaTrack>, LavaTrack>>();
             await serviceProvider.GetRequiredService<InteractionHandler>().InitAsync();
             serviceProvider.GetRequiredService<Core.Handlers.EventHandler>();
 

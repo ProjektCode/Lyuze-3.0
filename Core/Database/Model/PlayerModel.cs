@@ -8,6 +8,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using Discord.WebSocket;
 using Lyuze.Core.Handlers;
+using Microsoft.Extensions.Logging;
 
 namespace Lyuze.Core.Database.Model {
     public class PlayerModel {
@@ -25,18 +26,17 @@ namespace Lyuze.Core.Database.Model {
         public List<String> InfranctionMessages { get; set; } = new List<String>();
     }
 
-    public class Player {
+    public sealed class Player {
         public static DatabaseContext Db { get; set; } = null!;
 
         public static void Initialize(DatabaseContext dbCtx) {
             Db = dbCtx ?? throw new ArgumentNullException(nameof(dbCtx));
         }
 
-
         public static readonly Random random = new();
 
-        public static async Task CreateProfileAsync(SocketGuildUser user) {
-            Console.WriteLine($"[ProfileModel] Creacting profile for {user}");
+        public static async Task CreateProfileAsync(SocketGuildUser user, ILoggingService logger) {
+            await logger.LogInformationAsync("profile", $"Creating profile for {user}");
             int num = random.Next(SettingsHandler.Instance.ProfileBanners.Count);
 
             List<string> messages = [];
