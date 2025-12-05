@@ -8,7 +8,6 @@ namespace Lyuze.Core.Services {
         private readonly ILoggingService _logger;
         private readonly Dictionary<ulong, Dictionary<string, ulong>> _reactionRoles = [];
         private readonly ulong _roleId = 1343897392293875753;
-        private readonly Timer _timer;
         private readonly Random _random = new();
 
         public ReactionRolesService(DiscordSocketClient client, ILoggingService logger) {
@@ -19,7 +18,7 @@ namespace Lyuze.Core.Services {
 
             InitializeReactionRolesAsync().GetAwaiter();
 
-            _timer = new Timer(ChangeRoleColor, null, TimeSpan.Zero, TimeSpan.FromMinutes(45));
+            Timer _timer = new(ChangeRoleColor, null, TimeSpan.Zero, TimeSpan.FromMinutes(45));
         }
 
         // Add a reaction-role mapping
