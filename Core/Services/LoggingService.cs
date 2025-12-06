@@ -58,6 +58,12 @@ namespace Lyuze.Core.Services {
         public Task LogSetupAsync(string source, string message) =>
             LogAsync(source, LogSeverity.Verbose, message);
 
+        public Task LogWarningAsync(string source, string message) =>
+            LogAsync(source, LogSeverity.Warning, message);
+
+        public Task LogErrorAsync(string message, Exception exception, string source) =>
+            LogAsync(source, LogSeverity.Error, message, exception);
+
         private static string SourceToString(string src) {
             if (string.IsNullOrWhiteSpace(src)) return "UNKWN";
 
@@ -81,6 +87,7 @@ namespace Lyuze.Core.Services {
                 "deleted" => "DELET",
                 "join" => "JOINN",
                 "profile" => "PRFIL",
+                "waifu" => "WAIFU",
                 _ => src
             };
         }
@@ -104,5 +111,6 @@ namespace Lyuze.Core.Services {
             LogSeverity.Warning => "#FFFF00", // Yellow
             _ => "#FFFFFF" // White
         };
+
     }
 }

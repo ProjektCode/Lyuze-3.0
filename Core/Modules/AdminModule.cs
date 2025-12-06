@@ -9,8 +9,8 @@ namespace Lyuze.Core.Modules {
     public class AdminModule : InteractionModuleBase<SocketInteractionContext> {
 
         [SlashCommand("purge", "Purge messages from the last 14 days")]
-        [RequireBotPermission(Discord.GuildPermission.ManageMessages)]
-        [RequireUserPermission(Discord.GuildPermission.ManageMessages)]
+        [RequireBotPermission(GuildPermission.ManageMessages)]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task PurgeCmd(int amount = 1000) {
             await DeferAsync(ephemeral: true);
 
@@ -49,8 +49,8 @@ namespace Lyuze.Core.Modules {
         }
 
         [SlashCommand("kick", "Kick user from the server")]
-        [RequireBotPermission(Discord.GuildPermission.KickMembers)]
-        [RequireUserPermission(Discord.GuildPermission.KickMembers)]
+        [RequireBotPermission(GuildPermission.KickMembers)]
+        [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickCmd(SocketGuildUser user, String reason = "No reason given.") {
             try {
                 await user.KickAsync(reason);
@@ -65,8 +65,8 @@ namespace Lyuze.Core.Modules {
         }
 
         [SlashCommand("ban", "Ban user from the server")]
-        [RequireBotPermission(Discord.GuildPermission.BanMembers)]
-        [RequireUserPermission(Discord.GuildPermission.BanMembers)]
+        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task BanCmd(SocketGuildUser user,int pruneDays ,String reason = "No reason given.") {
             try {
                 await Context.Guild.AddBanAsync(user,pruneDays, reason);

@@ -7,7 +7,7 @@ namespace Lyuze.Core.Services.Images {
     public class ImageGenerator {
         public static async Task<string> CreateBannerImageAsync(SocketGuildUser user, string msg, string submsg) {
             var avatar = await ImageFetcher.FetchImageAsync(user.GetAvatarUrl(ImageFormat.Png, 2048) ?? user.GetDefaultAvatarUrl());
-            var background = await ImageFetcher.FetchImageAsync(ImageSettings.DefaultBackgroundUrl);
+            var background = await ImageFetcher.FetchImageAsync(ImageConfig.DefaultBackgroundUrl);
 
             background = ImageUtils.CropToBanner(background);
             var border = ImageUtils.CircleBorder(avatar);
@@ -28,10 +28,10 @@ namespace Lyuze.Core.Services.Images {
         }
 
         public static async Task<string> CreateImageAsync(int width, int height, string? url = null) {
-            var background = await ImageFetcher.FetchImageAsync(url ?? ImageSettings.DefaultBackgroundUrl);
+            var background = await ImageFetcher.FetchImageAsync(url ?? ImageConfig.DefaultBackgroundUrl);
 
             if (background.Width < width || background.Height < height) {
-                background = await ImageFetcher.FetchImageAsync(ImageSettings.DefaultBackgroundUrl);
+                background = await ImageFetcher.FetchImageAsync(ImageConfig.DefaultBackgroundUrl);
                 background = ImageUtils.CropToBanner(background);
                 background = TextDrawer.DrawTextToImage(background, "Error has occurred.", "Invalid dimensions.");
             } else {

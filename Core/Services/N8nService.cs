@@ -1,11 +1,12 @@
 ﻿using Lyuze.Core.Configuration;
+using Lyuze.Core.Services.Interfaces;
 using System.Text;
 using System.Text.Json;
 
 namespace Lyuze.Core.Services {
-    public class N8nService(LoggingService logger, SettingsConfig settings) {
+    public class N8nService(ILoggingService logger, SettingsConfig settings) {
         private readonly HttpClient _httpClient = new();
-        private readonly LoggingService _logger = logger;
+        private readonly ILoggingService _logger = logger;
         private readonly SettingsConfig _settings = settings;
 
         /// <summary>

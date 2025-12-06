@@ -8,7 +8,7 @@ namespace Lyuze.Core.Services.Images {
             var response = await client.GetAsync(url);
 
             if (!response.IsSuccessStatusCode) {
-                var backupResponse = await client.GetAsync(ImageSettings.BackupImageUrl);
+                var backupResponse = await client.GetAsync(ImageConfig.BackupImageUrl);
                 return Image.FromStream(await backupResponse.Content.ReadAsStreamAsync());
             }
 

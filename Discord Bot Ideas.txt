@@ -15,14 +15,10 @@ Image Based Commands
 	SauceNAO
 	Trace.Moe
 	TenorAPI
-Music
-	Victoria
 Anime & Otaku
 	Anime Lookup - AniList or JikanAPI
 	Seasonal Anime Schedule - AniList or JikanAPI
 	Waifu of the day
 	Animechan
-AI
-	AI Image Generation
 Misc
 	Quote system

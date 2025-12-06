@@ -7,6 +7,7 @@ using Lyuze.Core.Database.Model;
 using Lyuze.Core.Services;
 using Lyuze.Core.Services.Database;
 using Lyuze.Core.Services.Images;
+using Lyuze.Core.Services.Interfaces;
 using Lyuze.Core.Utilities;
 
 namespace Lyuze.Core.Handlers {
@@ -14,9 +15,9 @@ namespace Lyuze.Core.Handlers {
         private readonly DiscordSocketClient _client;
         private readonly InteractionService _cmds;
         private readonly LevelingService _lvlService;
-        private readonly LoggingService _logger;
+        private readonly ILoggingService _logger;
 
-        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, LoggingService logger) {
+        public EventHandler(DiscordSocketClient client, InteractionService cmds, LevelingService levelingService, ILoggingService logger) {
             _client = client;
             _cmds = cmds;
             _lvlService = levelingService;

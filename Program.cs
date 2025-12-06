@@ -1,16 +1,20 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Discord;
-using Discord.WebSocket;
 using Discord.Interactions;
 using Discord.Net.Providers.WS4Net;
-using Lyuze.Core.Handlers;
-using Lyuze.Core.Services;
+using Discord.WebSocket;
+using Lyuze.Core.Configuration;
 using Lyuze.Core.Database;
 using Lyuze.Core.Database.Model;
-using Lyuze.Core.Configuration;
+using Lyuze.Core.Handlers;
+using Lyuze.Core.Services;
 using Lyuze.Core.Services.Database;
+using Lyuze.Core.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Lyuze {
     public class Program {
@@ -18,55 +22,76 @@ namespace Lyuze {
         public static Task Main() => MainAsync();
 
         public static async Task MainAsync() {
-
+            // Load settings once and initialize DB before building the host
             await SettingsConfig.LoadAsync();
             var settings = SettingsConfig.Instance;
 
-            var DbCtx = new DatabaseContext(settings);
-            Player.Initialize(DbCtx);
+            var dbContext = new DatabaseContext(settings);
+            Player.Initialize(dbContext);
 
             using IHost host = Host.CreateDefaultBuilder()
-                .ConfigureServices((_, services) =>
-                    services
-                    .AddSingleton<LoggingService, LoggingService>()
-                    .AddSingleton(_ => SettingsConfig.Instance)
-                    .AddSingleton(x => new DiscordSocketClient(new DiscordSocketConfig {
+                .ConfigureServices((_, services) => {
+                    // Core config & logging
+                    services.AddSingleton<ILoggingService, LoggingService>();
+                    services.AddSingleton(_ => SettingsConfig.Instance);
+
+                    // Discord client
+                    services.AddSingleton(sp => new DiscordSocketClient(new DiscordSocketConfig {
                         GatewayIntents = GatewayIntents.All,
                         WebSocketProvider = WS4NetProvider.Instance,
                         AlwaysDownloadUsers = true,
                         LogLevel = LogSeverity.Info,
                         DefaultRetryMode = RetryMode.AlwaysRetry,
                         LogGatewayIntentWarnings = false,
-                        MessageCacheSize = 102 }))
+                        MessageCacheSize = 102
+                    }));
 
-                    .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()))
-                    .AddSingleton<InteractionHandler>()
-                    .AddSingleton<Core.Handlers.EventHandler>()
-                    .AddSingleton<ReactionRolesService>()
-                    .AddSingleton<LevelingService>()
-                    .AddSingleton<N8nService>()
-                    .AddLogging(x => { x.ClearProviders(); x.AddSimpleConsole(); x.SetMinimumLevel(LogLevel.Trace); x.AddFilter("Victoria.LavaNode", LogLevel.Information);})
-                ).Build();
+                    // Interaction service
+                    services.AddSingleton(sp =>
+                        new InteractionService(sp.GetRequiredService<DiscordSocketClient>()));
+
+                    // Handlers
+                    services.AddSingleton<InteractionHandler>();
+                    services.AddSingleton<Core.Handlers.EventHandler>();
+
+                    // Bot services
+                    services.AddSingleton<ReactionRolesService>();
+                    services.AddSingleton<LevelingService>();
+                    services.AddSingleton<N8nService>();
+
+                    // Typed HttpClient for WaifuService
+                    services.AddHttpClient<WaifuService>();
+
+                    // Host logging configuration
+                    services.AddLogging(logging => {
+                        logging.ClearProviders();
+                        logging.AddSimpleConsole();
+                        logging.SetMinimumLevel(LogLevel.Trace);
+                    });
+                })
+                .Build();
 
             await RunAsync(host);
         }
 
         public static async Task RunAsync(IHost host) {
-
             using IServiceScope serviceScope = host.Services.CreateScope();
             IServiceProvider serviceProvider = serviceScope.ServiceProvider;
 
-            var _client = serviceProvider.GetRequiredService<DiscordSocketClient>();
-            var _cmds = serviceProvider.GetRequiredService<InteractionService>();
-            var _settings = serviceProvider.GetRequiredService<SettingsConfig>();
+            var client = serviceProvider.GetRequiredService<DiscordSocketClient>();
+            var interactionService = serviceProvider.GetRequiredService<InteractionService>();
+            var settings = serviceProvider.GetRequiredService<SettingsConfig>();
+
+            // Initialize interaction handler (register slash commands, etc.)
             await serviceProvider.GetRequiredService<InteractionHandler>().InitAsync();
+
+            // Force construction of event handler so it wires events
             serviceProvider.GetRequiredService<Core.Handlers.EventHandler>();
 
-            await _client.LoginAsync(TokenType.Bot, _settings.Discord.Token);
-            await _client.StartAsync();
+            await client.LoginAsync(TokenType.Bot, settings.Discord.Token);
+            await client.StartAsync();
 
             await Task.Delay(Timeout.Infinite);
         }
-
     }
 }

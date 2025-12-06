@@ -6,14 +6,8 @@ using Lyuze.Core.Utilities;
 namespace Lyuze.Core.Modules {
 
     [Group("n8n", "Integration commands with the n8n automation system")]
-    public class N8nModule : InteractionModuleBase<SocketInteractionContext> {
-        private readonly N8nService _n8nService;
-        private readonly LoggingService _logger;
-
-        public N8nModule(N8nService n8nService, LoggingService logger) {
-            _n8nService = n8nService;
-            _logger = logger;
-        }
+    public class N8nModule(N8nService n8nService) : InteractionModuleBase<SocketInteractionContext> {
+        private readonly N8nService _n8nService = n8nService;
 
         [SlashCommand("track", "Track a LiveChart anime ID")]
         public async Task TrackAsync(

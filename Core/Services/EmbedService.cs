@@ -7,13 +7,8 @@ using Lyuze.Core.Services.Images;
 using Lyuze.Core.Services.Database;
 
 namespace Lyuze.Core.Services {
-    public sealed class EmbedService {
-        private readonly MasterUtilities _utils;
-
-        // Inject dependencies via constructor (better for testing and flexibility)
-        public EmbedService(MasterUtilities utils) {
-            _utils = utils ?? throw new ArgumentNullException(nameof(utils));
-        }
+    public sealed class EmbedService(MasterUtilities utils) {
+        private readonly MasterUtilities _utils = utils ?? throw new ArgumentNullException(nameof(utils));
 
         // Private helper to create embed builders easily
         private EmbedBuilder CreateEmbed(string title, string description, Color? color) {
