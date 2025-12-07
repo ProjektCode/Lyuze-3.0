@@ -7,8 +7,14 @@ using Lyuze.Core.Services.Images;
 using Lyuze.Core.Services.Database;
 
 namespace Lyuze.Core.Services {
-    public sealed class EmbedService(MasterUtilities utils) {
-        private readonly MasterUtilities _utils = utils ?? throw new ArgumentNullException(nameof(utils));
+    public class EmbedService {
+        private readonly MasterUtilities _utils;
+        private readonly LevelingService _levelingService;
+
+        public EmbedService(MasterUtilities utils, LevelingService levelingService) {
+            _levelingService = levelingService;
+            _utils = utils;
+        }
 
         // Private helper to create embed builders easily
         private EmbedBuilder CreateEmbed(string title, string description, Color? color) {
@@ -31,7 +37,11 @@ namespace Lyuze.Core.Services {
             return Task.FromResult(embed);
         }
 
-        public static async Task<Embed> ProfileEmbedAsync(SocketGuildUser user, SocketCommandContext ctx, PlayerModel player) {
+        public async Task<Embed> ProfileEmbedAsync(
+            SocketGuildUser user,
+            SocketCommandContext ctx,
+            PlayerModel player) {
+
             var embed = new EmbedBuilder {
                 Title = $"{user.Username}'s Profile | Level - {player.Level}",
                 ImageUrl = player.Background,
@@ -44,29 +54,28 @@ namespace Lyuze.Core.Services {
                 }
             };
 
-            if (!string.IsNullOrEmpty(user.Nickname)) embed.AddField("Nickname", user.Nickname, inline: true);
+            if (!string.IsNullOrEmpty(user.Nickname)) {
+                embed.AddField("Nickname", user.Nickname, inline: true);
+            }
 
-            embed.AddField("XP", $"{player.XP}/{LevelingService.LevelEquation(player.Level)}", inline: true);
+            // ✅ Use instance LevelingService
+            var requiredXp = _levelingService.LevelEquation(player.Level);
+            embed.AddField("XP", $"{player.XP}/{requiredXp}", inline: true);
 
-            embed.AddField("Account Creation", user.CreatedAt.DateTime.ToShortDateString(), inline: true);
+            embed.AddField("Account Creation",
+                user.CreatedAt.DateTime.ToShortDateString(), inline: true);
 
-            embed.AddField("Joined Server", user.JoinedAt?.DateTime.ToShortDateString() ?? "N/A", inline: true);
+            embed.AddField("Joined Server",
+                user.JoinedAt?.DateTime.ToShortDateString() ?? "N/A", inline: true);
 
-            embed.AddField("Current Activity", user.Activities, inline: true);
+            // Current activity: show first activity name or "N/A"
+            var activity = user.Activities?.FirstOrDefault();
+            var activityText = activity != null ? activity.Name : "N/A";
+            embed.AddField("Current Activity", activityText, inline: true);
 
             embed.AddField("About Me", player.AboutMe ?? "N/A");
 
             return embed.Build();
-        }
-
-        public Task<Embed> VictoriaNoQueueEmbedAsync() {
-            var embed = CreateEmbed("NO QUEUE", "There are no songs in the current queue", Color.Red).Build();
-            return Task.FromResult(embed);
-        }
-
-        public Task<Embed> VictoriaInvalidUsageEmbedAsync(ITextChannel channel) {
-            var embed = CreateEmbed("Invalid Command Usage", $"Command cannot be used in {channel.Name}.", Color.Red).Build();
-            return Task.FromResult(embed);
         }
     }
 }

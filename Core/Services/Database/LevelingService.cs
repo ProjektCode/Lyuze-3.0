@@ -3,81 +3,97 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Lyuze.Core.Database.Model;
 using Lyuze.Core.Services.Images;
+using Lyuze.Core.Services.Interfaces;
 
 namespace Lyuze.Core.Services.Database {
-    public class LevelingService() {
+    public class LevelingService(IPlayerService player) {
 
-        private static readonly List<Message> MsgList = [];
-        private static readonly List<ulong> AuthorList = [];
+        private readonly IPlayerService _player = player;
 
-        public static double LevelEquation(int lvl) {
+        // Instance-level state instead of static
+        private readonly List<Message> _msgList = [];
+        private readonly List<ulong> _authorList = [];
+
+        public double LevelEquation(int lvl) {
             double xp = Math.Floor(Math.Round(25 * Math.Pow(lvl + 1, 2)));
             return xp;
         }
 
-        public static async Task<bool> CanLevelUp(SocketGuildUser user) {
-            PlayerModel _player = await Player.GetUserAsync(user);
-            double needXP = LevelEquation(_player.Level);
+        public async Task<bool> CanLevelUpAsync(SocketGuildUser user) {
+            PlayerModel player = await _player.GetUserAsync(user);
+            double needXP = LevelEquation(player.Level);
 
-            if (_player.XP >= needXP) {
-                return true;
-            }
-            return false;
+            return player.XP >= needXP;
         }
 
-        public static async Task LevelUp(SocketGuildUser user, SocketCommandContext ctx) {
-            PlayerModel player = await Player.GetUserAsync(user);
+        public async Task LevelUpAsync(SocketGuildUser user, SocketCommandContext ctx) {
+            PlayerModel player = await _player.GetUserAsync(user);
 
             int xp = 0;
-            if (player.XP >= LevelEquation(player.Level)) xp = (int)(player.XP - LevelEquation(player.Level));
+            double neededXp = LevelEquation(player.Level);
+
+            if (player.XP >= neededXp) {
+                xp = (int)(player.XP - neededXp);
+            }
 
             player.Level++;
             player.XP = xp;
 
             if (player.LevelNotify) {
+                var avatarUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl();
+
                 EmbedBuilder embed = new() {
-                    Title = $"{user.Username} Has reached level {player.Level}!",
-                    Description = $"{LevelEquation(player.Level)} xp needed for the next level.",
-                    Color = new Color(await ColorUtils.RandomColorFromUrlAsync(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())),
-                    ThumbnailUrl = user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl()
+                    Title = $"{user.Username} has reached level {player.Level}!",
+                    Description = $"{LevelEquation(player.Level)} XP needed for the next level.",
+                    Color = new Color(await ColorUtils.RandomColorFromUrlAsync(avatarUrl)),
+                    ThumbnailUrl = avatarUrl
                 };
 
                 await ctx.Channel.SendMessageAsync(embed: embed.Build());
             }
 
-            await Player.UpdateUserAsync(user, player);
+            await _player.UpdateUserAsync(user, player);
         }
 
-        public static async Task GiveXP(SocketGuildUser user, int xp = 1) {
-            PlayerModel player = await Player.GetUserAsync(user);
+        public async Task GiveXPAsync(SocketGuildUser user, int xp = 1) {
+            PlayerModel player = await _player.GetUserAsync(user);
             player.XP += xp;
-            await Player.UpdateUserAsync(user, player);
+            await _player.UpdateUserAsync(user, player);
         }
 
-        public static async Task MsgCoolDownAsync(IUserMessage message, SocketCommandContext ctx, int xp = 1) {
+        public async Task MsgCoolDownAsync(IUserMessage message, SocketCommandContext ctx, int xp = 1) {
             Message newMsg = new() {
                 AuthorID = message.Author.Id,
                 Timestamp = message.Timestamp,
             };
 
-            if (AuthorList.Contains(newMsg.AuthorID)) {
-                //Chek current time and see if 3 seconds have passed since last message
-                var AuthorMsg = MsgList.Find(x => x.AuthorID == newMsg.AuthorID);
-                if (AuthorMsg?.Timestamp.AddSeconds(3)! >= DateTimeOffset.Now) {
-                    AuthorList.Remove(message.Author.Id);
-                    MsgList.Remove(AuthorMsg);
-                    await LevelHelper((SocketGuildUser)message.Author, xp, ctx);
+            // If we’ve seen this author recently
+            if (_authorList.Contains(newMsg.AuthorID)) {
+                // Find their previous message
+                var authorMsg = _msgList.Find(x => x.AuthorID == newMsg.AuthorID);
+
+                // If at least 3 seconds have passed → award XP again
+                if (authorMsg?.Timestamp.AddSeconds(3) <= DateTimeOffset.Now) {
+                    _authorList.Remove(message.Author.Id);
+                    if (authorMsg != null) {
+                        _msgList.Remove(authorMsg);
+                    }
+
+                    await LevelHelperAsync((SocketGuildUser)message.Author, xp, ctx);
                 }
             } else {
-                AuthorList.Add(message.Author.Id);
-                MsgList.Add(newMsg);
-                await LevelHelper((SocketGuildUser)message.Author, xp, ctx);
+                // First message from this author (for our purposes)
+                _authorList.Add(message.Author.Id);
+                _msgList.Add(newMsg);
+                await LevelHelperAsync((SocketGuildUser)message.Author, xp, ctx);
             }
         }
 
-        public static async Task LevelHelper(SocketGuildUser user, int xp, SocketCommandContext ctx) {
-            await GiveXP(user, xp);
-            if (await CanLevelUp(user)) await LevelUp(user, ctx);
+        private async Task LevelHelperAsync(SocketGuildUser user, int xp, SocketCommandContext ctx) {
+            await GiveXPAsync(user, xp);
+            if (await CanLevelUpAsync(user)) {
+                await LevelUpAsync(user, ctx);
+            }
         }
     }
 

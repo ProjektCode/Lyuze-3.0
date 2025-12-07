@@ -3,7 +3,7 @@
 namespace Lyuze.Core.Configuration {
     public class SettingsConfig {
         [JsonProperty("_Discord")]
-        public _Discord Discord { get; set; } = new _Discord {
+        public _Discord Discord { get; set; } = new() {
             Name = "Default Discord Name",
             Token = "Default Discord Token",
             GuildId = 0
@@ -34,58 +34,16 @@ namespace Lyuze.Core.Configuration {
         public List<ReactionRoleEntry> ReactionRoles { get; set; } = [];
 
         [JsonProperty(nameof(Database))]
-        public Database Database { get; set; } = new Database {
+        public Database Database { get; set; } = new() {
             MongoDb = "Default Mongodb",
             PlayerCollection = "Default PlayerCollection",
             DatabaseName = "Default Database Name"
         };
 
         [JsonProperty(nameof(N8n))]
-        public N8N N8n { get; set; } = new N8N {
+        public N8N N8n { get; set; } = new() {
             WebhookUrl = string.Empty
         };
-
-
-
-        private static SettingsConfig? _instance;
-        public static SettingsConfig Instance {
-            get {
-                if (_instance == null)
-                    throw new InvalidOperationException("Settings not loaded yet.");
-                return _instance;
-            }
-            private set => _instance = value;
-        }
-
-        public static async Task<SettingsConfig> LoadAsync() {
-            var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            var filePath = Path.Combine(basePath, "Resources", "Settings", "settings.json");
-
-            SettingsConfig settings;
-
-            if (File.Exists(filePath)) {
-                var json = await File.ReadAllTextAsync(filePath);
-                settings = JsonConvert.DeserializeObject<SettingsConfig>(json) ?? new SettingsConfig();
-            } else {
-                settings = new SettingsConfig();
-                await SaveSettingsAsync(settings, filePath);
-            }
-
-            Instance = settings;  // <-- Assign the singleton instance here
-
-            return Instance;
-        }
-
-        private static async Task SaveSettingsAsync(SettingsConfig settings, string filePath) {
-            var json = JsonConvert.SerializeObject(settings, Formatting.Indented);
-            await File.WriteAllTextAsync(filePath, json);
-        }
-
-        public async Task SaveSettingsAsync() {
-            var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            var filePath = Path.Combine(basePath, "Resources", "Settings", "settings.json");
-            await SaveSettingsAsync(this, filePath);
-        }
     }
 
     public class ApIs {
@@ -139,7 +97,6 @@ namespace Lyuze.Core.Configuration {
         public ulong ReactionRoleMessageId { get; set; }
     }
 
-    // New class for reaction role entries:
     public class ReactionRoleEntry {
         [JsonProperty(nameof(Emoji))]
         public string Emoji { get; set; } = null!;
@@ -160,6 +117,7 @@ namespace Lyuze.Core.Configuration {
     }
 
     public class N8N {
+        // Must match your JSON: "WebhookURL"
         [JsonProperty("WebhookURL")]
         public required string WebhookUrl { get; set; }
     }

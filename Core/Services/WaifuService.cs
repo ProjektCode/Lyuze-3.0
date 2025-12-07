@@ -1,6 +1,4 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Lyuze.Core.Services.Interfaces;
+﻿using Lyuze.Core.Services.Interfaces;
 using Lyuze.Core.Models.API;
 
 namespace Lyuze.Core.Services {
@@ -19,12 +17,10 @@ namespace Lyuze.Core.Services {
             var encodedTag = Uri.EscapeDataString(tag.Trim());
 
             try {
-                var response = await _httpClient.GetAsync(
-                    $"https://api.waifu.im/search?included_tags={encodedTag}&limit=20");
+                var response = await _httpClient.GetAsync($"https://api.waifu.im/search?included_tags={encodedTag}&limit=20");
 
                 if (!response.IsSuccessStatusCode) {
-                    await _logger.LogWarningAsync("waifu",
-                        $"Failed to fetch waifu image. HTTP {(int)response.StatusCode}");
+                    await _logger.LogWarningAsync("waifu",$"Failed to fetch waifu image. HTTP {(int)response.StatusCode}");
                     return null;
                 }
 

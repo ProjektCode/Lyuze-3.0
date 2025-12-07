@@ -4,8 +4,8 @@ using System.Text;
 using System.Text.Json;
 
 namespace Lyuze.Core.Services {
-    public class N8nService(ILoggingService logger, SettingsConfig settings) {
-        private readonly HttpClient _httpClient = new();
+    public class N8nService(ILoggingService logger, SettingsConfig settings, HttpClient httpClient) {
+        private readonly HttpClient _httpClient = httpClient;
         private readonly ILoggingService _logger = logger;
         private readonly SettingsConfig _settings = settings;
 

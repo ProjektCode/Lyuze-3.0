@@ -7,13 +7,16 @@ namespace Lyuze.Core.Services {
     public class ReactionRolesService {
         private readonly DiscordSocketClient _client;
         private readonly ILoggingService _logger;
+        private readonly SettingsConfig _settings;
         private readonly Dictionary<ulong, Dictionary<string, ulong>> _reactionRoles = [];
         private readonly ulong _roleId = 1343897392293875753;
         private readonly Random _random = new();
 
-        public ReactionRolesService(DiscordSocketClient client, ILoggingService logger) {
+        public ReactionRolesService(DiscordSocketClient client, ILoggingService logger, SettingsConfig settingsConfig) {
             _client = client;
             _logger = logger;
+            _settings = settingsConfig;
+
             _client.ReactionAdded += OnReactionAddedAsync;
             _client.ReactionRemoved += OnReactionRemovedAsync;
 
@@ -25,14 +28,14 @@ namespace Lyuze.Core.Services {
         // Add a reaction-role mapping
         public async Task AddReactionRoleAsync(string emoji, ulong roleId) {
             try {
-                var settings = SettingsConfig.LoadAsync();
-                if (SettingsConfig.Instance.IDs?.ReactionRoleMessageId == null) {
+                //var settings = SettingsConfig.LoadAsync();
+                if (_settings.IDs?.ReactionRoleMessageId == null) {
                     //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
                     await _logger.LogCriticalAsync("roles", "Roles message not found");
                     return;
                 }
 
-                var messageId = SettingsConfig.Instance.IDs.ReactionRoleMessageId;
+                var messageId = _settings.IDs.ReactionRoleMessageId;
 
                 if (!_reactionRoles.TryGetValue(messageId, out var value)) {
                     value = [];
@@ -49,13 +52,13 @@ namespace Lyuze.Core.Services {
         private async Task OnReactionAddedAsync(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction) {
             try {
                 if (reaction.User.IsSpecified && !reaction.User.Value.IsBot) {
-                    if (SettingsConfig.Instance.IDs?.ReactionRoleMessageId == null) {
+                    if (_settings.IDs?.ReactionRoleMessageId == null) {
                         //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
                         await _logger.LogCriticalAsync("roles", "Roles message not found");
                         return;
                     }
 
-                    var messageId = SettingsConfig.Instance.IDs.ReactionRoleMessageId;
+                    var messageId = _settings.IDs.ReactionRoleMessageId;
                     var emojiKey = GetEmojiKey(reaction.Emote);
 
                     if (_reactionRoles.TryGetValue(messageId, out var emojiMap) && emojiMap.TryGetValue(emojiKey, out var roleId)) {
@@ -80,13 +83,13 @@ namespace Lyuze.Core.Services {
         private async Task OnReactionRemovedAsync(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction) {
             try {
                 if (reaction.User.IsSpecified && !reaction.User.Value.IsBot) {
-                    if (SettingsConfig.Instance.IDs?.ReactionRoleMessageId == null) {
+                    if (_settings.IDs?.ReactionRoleMessageId == null) {
                         //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
                         await _logger.LogCriticalAsync("roles", "Roles message not found");
                         return;
                     }
 
-                    var messageId = SettingsConfig.Instance.IDs.ReactionRoleMessageId;
+                    var messageId = _settings.IDs.ReactionRoleMessageId;
                     var emojiKey = GetEmojiKey(reaction.Emote);
 
                     if (_reactionRoles.TryGetValue(messageId, out var emojiMap) && emojiMap.TryGetValue(emojiKey, out var roleId)) {
@@ -110,13 +113,13 @@ namespace Lyuze.Core.Services {
 
         private async Task InitializeReactionRolesAsync() {
             try {
-                if (SettingsConfig.Instance.IDs?.ReactionRoleMessageId == null) {
+                if (_settings.IDs?.ReactionRoleMessageId == null) {
                     //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
                     await _logger.LogCriticalAsync("roles", "Roles message not found");
                     return;
                 }
 
-                var messageId = SettingsConfig.Instance.IDs.ReactionRoleMessageId;
+                var messageId = _settings.IDs.ReactionRoleMessageId;
 
                 if (!_reactionRoles.ContainsKey(messageId)) {
                     _reactionRoles[messageId] = [];
@@ -125,7 +128,7 @@ namespace Lyuze.Core.Services {
                 }
 
                 // Load roles from settings (must be List<ReactionRole>)
-                foreach (var rr in SettingsConfig.Instance.ReactionRoles) {
+                foreach (var rr in _settings.ReactionRoles) {
                     var emojiKey = rr.Emoji;
                     await AddReactionRoleAsync(emojiKey, rr.RoleId);
                 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Discord;
+﻿using Discord;
 using Discord.Interactions;
 using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
@@ -23,17 +20,23 @@ namespace Lyuze {
 
         public static async Task MainAsync() {
             // Load settings once and initialize DB before building the host
-            await SettingsConfig.LoadAsync();
-            var settings = SettingsConfig.Instance;
+            //await SettingsConfig.LoadAsync();
+            //var settings = SettingsConfig.Instance;
 
-            var dbContext = new DatabaseContext(settings);
-            Player.Initialize(dbContext);
+            //var dbContext = new DatabaseContext(settings);
+            //Player.Initialize(dbContext);
 
             using IHost host = Host.CreateDefaultBuilder()
                 .ConfigureServices((_, services) => {
                     // Core config & logging
                     services.AddSingleton<ILoggingService, LoggingService>();
-                    services.AddSingleton(_ => SettingsConfig.Instance);
+                    services.AddSingleton<ISettingsService, SettingsService>();
+                    services.AddSingleton<IPlayerService, PlayerService>();
+
+                    services.AddSingleton(settings => settings.GetRequiredService<ISettingsService>().Value); // SettingsConfig
+
+                    // DatabaseContext depends on SettingsConfig
+                    services.AddSingleton<DatabaseContext>(settings => new DatabaseContext(settings.GetRequiredService<SettingsConfig>()));
 
                     // Discord client
                     services.AddSingleton(sp => new DiscordSocketClient(new DiscordSocketConfig {
@@ -67,6 +70,8 @@ namespace Lyuze {
                         logging.ClearProviders();
                         logging.AddSimpleConsole();
                         logging.SetMinimumLevel(LogLevel.Trace);
+                        logging.AddFilter("System.Net.Http.HttpClient.WaifuService.LogicalHandler", LogLevel.Warning);
+                        logging.AddFilter("System.Net.Http.HttpClient.WaifuService.ClientHandler", LogLevel.Warning);
                     });
                 })
                 .Build();
@@ -81,9 +86,12 @@ namespace Lyuze {
             var client = serviceProvider.GetRequiredService<DiscordSocketClient>();
             var interactionService = serviceProvider.GetRequiredService<InteractionService>();
             var settings = serviceProvider.GetRequiredService<SettingsConfig>();
+            var player = serviceProvider.GetRequiredService<IPlayerService>();
 
             // Initialize interaction handler (register slash commands, etc.)
             await serviceProvider.GetRequiredService<InteractionHandler>().InitAsync();
+
+            var dbContext = serviceProvider.GetRequiredService<DatabaseContext>();
 
             // Force construction of event handler so it wires events
             serviceProvider.GetRequiredService<Core.Handlers.EventHandler>();
