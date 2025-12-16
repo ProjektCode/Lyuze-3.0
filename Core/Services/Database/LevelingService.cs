@@ -14,7 +14,7 @@ namespace Lyuze.Core.Services.Database {
         private readonly List<Message> _msgList = [];
         private readonly List<ulong> _authorList = [];
 
-        public double LevelEquation(int lvl) {
+        public static double LevelEquation(int lvl) {
             double xp = Math.Floor(Math.Round(25 * Math.Pow(lvl + 1, 2)));
             return xp;
         }

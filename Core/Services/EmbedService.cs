@@ -59,7 +59,7 @@ namespace Lyuze.Core.Services {
             }
 
             // ✅ Use instance LevelingService
-            var requiredXp = _levelingService.LevelEquation(player.Level);
+            var requiredXp = LevelingService.LevelEquation(player.Level);
             embed.AddField("XP", $"{player.XP}/{requiredXp}", inline: true);
 
             embed.AddField("Account Creation",
