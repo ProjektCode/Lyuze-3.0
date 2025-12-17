@@ -77,6 +77,7 @@ namespace Lyuze {
                         logging.SetMinimumLevel(LogLevel.Trace);
                         logging.AddFilter("System.Net.Http.HttpClient.WaifuService.LogicalHandler", LogLevel.Warning);
                         logging.AddFilter("System.Net.Http.HttpClient.WaifuService.ClientHandler", LogLevel.Warning);
+                        logging.AddFilter("Microsoft.Extensions.Http", LogLevel.Debug);
                     });
                 })
                 .Build();

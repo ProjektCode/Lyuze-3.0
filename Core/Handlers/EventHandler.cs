@@ -19,7 +19,8 @@ namespace Lyuze.Core.Handlers {
         private readonly IStatusProvider _statusProvider;
         private readonly ReactionRolesService _reactionRolesService;
 
-        private Timer? _statusTimer;
+        private CancellationTokenSource? _statusCts;
+        private Task? _statusTask;
 
         public EventHandler(DiscordSocketClient client, InteractionService interactions, ILoggingService logger, SettingsConfig settings, LevelingService levelingService, IPlayerService playerService, IStatusProvider statusProvider, ReactionRolesService reactionRolesService) {
 
@@ -105,25 +106,10 @@ namespace Lyuze.Core.Handlers {
 
         private async Task OnReadyAsync() {
             try {
-                await _interactions.RegisterCommandsToGuildAsync(_settings.Discord.GuildId);
+                await RegisterCommandsAsync();
+                await SetOnlineAsync();
 
-                await _client.SetStatusAsync(UserStatus.Online);
-
-                // pick a starting index safely
-                var statuses = _settings.Status;
-                int i = _statusProvider.GetRandomStatusIndex(statuses);
-
-                // Keep a reference so the timer isn't GC'd
-                _statusTimer = new Timer(async _ => {
-                    try {
-
-                        i = (i + 1) % statuses.Count;
-                    } catch (Exception ex) {
-                        await _logger.LogCriticalAsync("discord",
-                            $"Exception in status rotation timer: {ex.Message}", ex);
-                    }
-                }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(120));
-
+                StartStatusRotation(); // fire-and-forget background loop (tracked)
                 await _reactionRolesService.InitializeAsync();
 
                 await _logger.LogInformationAsync("discord", "Bot is ready and commands are registered.");
@@ -131,6 +117,7 @@ namespace Lyuze.Core.Handlers {
                 await _logger.LogCriticalAsync("discord", $"OnReady: {ex.Message}", ex);
             }
         }
+
 
         private async Task OnMessageReceivedAsync(SocketMessage rawMessage) {
             try {
@@ -185,5 +172,70 @@ namespace Lyuze.Core.Handlers {
                 await _levelingService.GiveXPAsync(guildUser, 10);
             }
         }
+
+        private async Task RegisterCommandsAsync() {
+            await _interactions.RegisterCommandsToGuildAsync(_settings.Discord.GuildId);
+        }
+
+        private async Task SetOnlineAsync() {
+            await _client.SetStatusAsync(UserStatus.Online);
+        }
+
+        private void StartStatusRotation() {
+            // Stop an existing loop if Ready fires again for any reason
+            StopStatusRotation();
+
+            _statusCts = new CancellationTokenSource();
+            _statusTask = RunStatusRotationAsync(_statusCts.Token);
+        }
+
+        private void StopStatusRotation() {
+            if (_statusCts is null) return;
+
+            try { _statusCts.Cancel(); } catch { /* ignore */ } finally {
+                _statusCts.Dispose();
+                _statusCts = null;
+            }
+        }
+
+        private async Task RunStatusRotationAsync(CancellationToken token) {
+            var statuses = _settings.Status;
+            if (statuses == null || statuses.Count == 0) {
+                await _logger.LogWarningAsync("discord", "Status list is empty; skipping status rotation.");
+                return;
+            }
+
+            int i = _statusProvider.GetRandomStatusIndex(statuses);
+
+            // Set an initial activity immediately
+            await SetActivitySafeAsync(statuses[i]);
+
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(120));
+
+            while (!token.IsCancellationRequested) {
+                try {
+                    // Wait for the next tick
+                    if (!await timer.WaitForNextTickAsync(token))
+                        break;
+
+                    i = (i + 1) % statuses.Count;
+                    await SetActivitySafeAsync(statuses[i]);
+                } catch (OperationCanceledException) {
+                    break;
+                } catch (Exception ex) {
+                    await _logger.LogCriticalAsync("discord", $"Exception in status rotation: {ex.Message}", ex);
+                }
+            }
+        }
+
+        private async Task SetActivitySafeAsync(string? statusText) {
+            if (string.IsNullOrWhiteSpace(statusText))
+                return;
+
+            // choose whatever activity type you want
+            await _client.SetGameAsync(statusText, type: ActivityType.Listening);
+        }
+
+
     }
 }
