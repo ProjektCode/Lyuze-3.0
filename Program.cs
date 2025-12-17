@@ -75,10 +75,12 @@ namespace Lyuze {
                         logging.ClearProviders();
                         logging.AddSimpleConsole();
                         logging.SetMinimumLevel(LogLevel.Information);
+
                         logging.AddFilter("System.Net.Http.HttpClient.WaifuService.LogicalHandler", LogLevel.Warning);
                         logging.AddFilter("System.Net.Http.HttpClient.WaifuService.ClientHandler", LogLevel.Warning);
                         logging.AddFilter("Microsoft.Extensions.Http", LogLevel.Warning);
                         logging.AddFilter("Microsoft.Extensions.Http.DefaultHttpClientFactory", LogLevel.Warning);
+                        logging.AddFilter("Lyuze", LogLevel.Debug);
                     });
                 })
                 .Build();
