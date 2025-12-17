@@ -6,6 +6,7 @@
     <RootNamespace>Lyuze</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>Lyuze_3.0</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
