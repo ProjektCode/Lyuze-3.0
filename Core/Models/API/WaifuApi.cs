@@ -21,7 +21,8 @@ namespace Lyuze.Core.Models.API {
     }
 
     public partial class Waifu {
-        public static Waifu FromJson(string json) => JsonConvert.DeserializeObject<Waifu>(json, Converter.Settings);
+        public static Waifu FromJson(string json) => JsonConvert.DeserializeObject<Waifu>(json, Converter.Settings) ?? throw new InvalidOperationException("Failed to deserialize Waifu JSON.");
+
     }
 
     public static class Serialize {
