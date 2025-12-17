@@ -16,12 +16,12 @@ namespace Lyuze.Core.Handlers {
         private readonly SettingsConfig _settings;
         private readonly LevelingService _levelingService;
         private readonly IPlayerService _playerService;
-        private readonly IStatusProvider _statusProviderService;
+        private readonly IStatusProvider _statusProvider;
         private readonly ReactionRolesService _reactionRolesService;
 
         private Timer? _statusTimer;
 
-        public EventHandler(DiscordSocketClient client, InteractionService interactions, ILoggingService logger, SettingsConfig settings, LevelingService levelingService, IPlayerService playerService, IStatusProvider statusProviderService, ReactionRolesService reactionRolesService) {
+        public EventHandler(DiscordSocketClient client, InteractionService interactions, ILoggingService logger, SettingsConfig settings, LevelingService levelingService, IPlayerService playerService, IStatusProvider statusProvider, ReactionRolesService reactionRolesService) {
 
             _client = client;
             _interactions = interactions;
@@ -29,7 +29,7 @@ namespace Lyuze.Core.Handlers {
             _settings = settings;
             _levelingService = levelingService;
             _playerService = playerService;
-            _statusProviderService = statusProviderService;
+            _statusProvider = statusProvider;
             _reactionRolesService = reactionRolesService;
 
             // Register events
@@ -111,7 +111,7 @@ namespace Lyuze.Core.Handlers {
 
                 // pick a starting index safely
                 var statuses = _settings.Status;
-                int i = _statusProviderService.GetRandomStatusIndex(statuses);
+                int i = _statusProvider.GetRandomStatusIndex(statuses);
 
                 // Keep a reference so the timer isn't GC'd
                 _statusTimer = new Timer(async _ => {

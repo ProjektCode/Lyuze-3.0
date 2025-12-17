@@ -42,7 +42,7 @@ namespace Lyuze.Core.Services {
 
                 return selectedImage.Url.ToString();
             } catch (Exception ex) {
-                await _logger.LogErrorAsync("Unexpected exception in WaifuService.GetRandomWaifuPicAsync.", ex, "waifu");
+                await _logger.LogErrorAsync("waifu", "Unexpected exception in WaifuService.GetRandomWaifuPicAsync.", ex);
                 return null;
             }
         }

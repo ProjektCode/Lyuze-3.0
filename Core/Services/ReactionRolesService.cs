@@ -16,11 +16,7 @@ public sealed class ReactionRolesService {
     // Optional: move these into settings later
     private readonly ulong _roleIdToColorCycle = 1343897392293875753;
 
-    public ReactionRolesService(
-        DiscordSocketClient client,
-        ILoggingService logger,
-        SettingsConfig settingsConfig
-    ) {
+    public ReactionRolesService(DiscordSocketClient client, ILoggingService logger, SettingsConfig settingsConfig) {
         _client = client;
         _logger = logger;
         _settings = settingsConfig;
@@ -34,6 +30,7 @@ public sealed class ReactionRolesService {
     /// Call once when the bot is ready (after settings are loaded).
     /// </summary>
     public async Task InitializeAsync(CancellationToken ct = default) {
+
         if (_settings.IDs?.ReactionRoleMessageId is null or 0) {
             await _logger.LogWarningAsync("roles", "Reaction role message id not configured.");
             return;
@@ -67,11 +64,7 @@ public sealed class ReactionRolesService {
         return Task.CompletedTask;
     }
 
-    private async Task OnReactionAddedAsync(
-        Cacheable<IUserMessage, ulong> cache,
-        Cacheable<IMessageChannel, ulong> channel,
-        SocketReaction reaction
-    ) {
+    private async Task OnReactionAddedAsync(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction) {
         try {
             if (!reaction.User.IsSpecified) return;
             if (reaction.User.Value.IsBot) return;
@@ -87,7 +80,7 @@ public sealed class ReactionRolesService {
             if (!_emojiToRoleId.TryGetValue(emojiKey, out var roleId))
                 return;
 
-            var guildUser = await ResolveGuildUserAsync(channel, reaction.UserId, reaction.User.Value);
+            var guildUser = ResolveGuildUser(channel, reaction.UserId, reaction.User.Value);
             if (guildUser == null) return;
 
             var guild = (channel.Value as SocketGuildChannel)?.Guild ?? guildUser.Guild;
@@ -100,11 +93,7 @@ public sealed class ReactionRolesService {
         }
     }
 
-    private async Task OnReactionRemovedAsync(
-        Cacheable<IUserMessage, ulong> cache,
-        Cacheable<IMessageChannel, ulong> channel,
-        SocketReaction reaction
-    ) {
+    private async Task OnReactionRemovedAsync(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction) {
         try {
             if (!reaction.User.IsSpecified) return;
             if (reaction.User.Value.IsBot) return;
@@ -119,7 +108,7 @@ public sealed class ReactionRolesService {
             if (!_emojiToRoleId.TryGetValue(emojiKey, out var roleId))
                 return;
 
-            var guildUser = await ResolveGuildUserAsync(channel, reaction.UserId, reaction.User.Value);
+            var guildUser = ResolveGuildUser(channel, reaction.UserId, reaction.User.Value);
             if (guildUser == null) return;
 
             var guild = (channel.Value as SocketGuildChannel)?.Guild ?? guildUser.Guild;
@@ -132,11 +121,8 @@ public sealed class ReactionRolesService {
         }
     }
 
-    private static async Task<SocketGuildUser?> ResolveGuildUserAsync(
-        Cacheable<IMessageChannel, ulong> channel,
-        ulong userId,
-        IUser reactionUser
-    ) {
+    private static SocketGuildUser? ResolveGuildUser( Cacheable<IMessageChannel, ulong> channel, ulong userId, IUser reactionUser) {
+
         if (reactionUser is SocketGuildUser sgu)
             return sgu;
 
@@ -145,6 +131,7 @@ public sealed class ReactionRolesService {
 
         return null;
     }
+
 
     private async Task RunRoleColorCycleAsync(CancellationToken ct) {
         try {
