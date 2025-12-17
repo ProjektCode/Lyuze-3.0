@@ -5,16 +5,12 @@ using Lyuze.Core.Database.Model;
 using Lyuze.Core.Utilities;
 using Lyuze.Core.Services.Images;
 using Lyuze.Core.Services.Database;
+using Lyuze.Core.Services.Interfaces;
 
 namespace Lyuze.Core.Services {
-    public class EmbedService {
-        private readonly MasterUtilities _utils;
-        private readonly LevelingService _levelingService;
-
-        public EmbedService(MasterUtilities utils, LevelingService levelingService) {
-            _levelingService = levelingService;
-            _utils = utils;
-        }
+    public class EmbedService(LevelingService levelingService, IEmbedColorProvider embedColorService) {
+        private readonly LevelingService _levelingService = levelingService;
+        private readonly IEmbedColorProvider _embedColorService = embedColorService;
 
         // Private helper to create embed builders easily
         private EmbedBuilder CreateEmbed(string title, string description, Color? color) {
@@ -27,7 +23,7 @@ namespace Lyuze.Core.Services {
             if (!string.IsNullOrWhiteSpace(description))
                 builder.WithDescription(description);
 
-            builder.WithColor(color ?? new Color(_utils.RandomEmbedColor()));
+            builder.WithColor(color ?? new Color(_embedColorService.GetRandomEmbedColor()));
 
             return builder;
         }

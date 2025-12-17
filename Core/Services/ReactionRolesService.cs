@@ -3,165 +3,174 @@ using Discord.WebSocket;
 using Lyuze.Core.Configuration;
 using Lyuze.Core.Services.Interfaces;
 
-namespace Lyuze.Core.Services {
-    public class ReactionRolesService {
-        private readonly DiscordSocketClient _client;
-        private readonly ILoggingService _logger;
-        private readonly SettingsConfig _settings;
-        private readonly Dictionary<ulong, Dictionary<string, ulong>> _reactionRoles = [];
-        private readonly ulong _roleId = 1343897392293875753;
-        private readonly Random _random = new();
+namespace Lyuze.Core.Services;
 
-        public ReactionRolesService(DiscordSocketClient client, ILoggingService logger, SettingsConfig settingsConfig) {
-            _client = client;
-            _logger = logger;
-            _settings = settingsConfig;
+public sealed class ReactionRolesService {
+    private readonly DiscordSocketClient _client;
+    private readonly ILoggingService _logger;
+    private readonly SettingsConfig _settings;
 
-            _client.ReactionAdded += OnReactionAddedAsync;
-            _client.ReactionRemoved += OnReactionRemovedAsync;
+    // Since you only support ONE reaction role message id in settings, keep this simple:
+    private readonly Dictionary<string, ulong> _emojiToRoleId = new(StringComparer.Ordinal);
 
-            InitializeReactionRolesAsync().GetAwaiter();
+    // Optional: move these into settings later
+    private readonly ulong _roleIdToColorCycle = 1343897392293875753;
 
-            Timer _timer = new(ChangeRoleColor, null, TimeSpan.Zero, TimeSpan.FromMinutes(45));
+    public ReactionRolesService(
+        DiscordSocketClient client,
+        ILoggingService logger,
+        SettingsConfig settingsConfig
+    ) {
+        _client = client;
+        _logger = logger;
+        _settings = settingsConfig;
+
+        // Hook events (safe in constructor)
+        _client.ReactionAdded += OnReactionAddedAsync;
+        _client.ReactionRemoved += OnReactionRemovedAsync;
+    }
+
+    /// <summary>
+    /// Call once when the bot is ready (after settings are loaded).
+    /// </summary>
+    public async Task InitializeAsync(CancellationToken ct = default) {
+        if (_settings.IDs?.ReactionRoleMessageId is null or 0) {
+            await _logger.LogWarningAsync("roles", "Reaction role message id not configured.");
+            return;
         }
 
-        // Add a reaction-role mapping
-        public async Task AddReactionRoleAsync(string emoji, ulong roleId) {
-            try {
-                //var settings = SettingsConfig.LoadAsync();
-                if (_settings.IDs?.ReactionRoleMessageId == null) {
-                    //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
-                    await _logger.LogCriticalAsync("roles", "Roles message not found");
-                    return;
-                }
+        _emojiToRoleId.Clear();
 
-                var messageId = _settings.IDs.ReactionRoleMessageId;
-
-                if (!_reactionRoles.TryGetValue(messageId, out var value)) {
-                    value = [];
-                    _reactionRoles[messageId] = value;
-                }
-
-                value[emoji] = roleId;
-            } catch (Exception ex) {
-                //Console.WriteLine($"[ReactionRoleHandler] AddReactionRole Exception: {ex}");
-                await _logger.LogCriticalAsync("roles", "Error has occurd", ex);
-            }
+        if (_settings.ReactionRoles is null || _settings.ReactionRoles.Count == 0) {
+            await _logger.LogInformationAsync("roles", "No reaction roles found in settings.");
+            return;
         }
 
-        private async Task OnReactionAddedAsync(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction) {
-            try {
-                if (reaction.User.IsSpecified && !reaction.User.Value.IsBot) {
-                    if (_settings.IDs?.ReactionRoleMessageId == null) {
-                        //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
-                        await _logger.LogCriticalAsync("roles", "Roles message not found");
-                        return;
-                    }
+        foreach (var rr in _settings.ReactionRoles) {
+            if (string.IsNullOrWhiteSpace(rr.Emoji) || rr.RoleId == 0)
+                continue;
 
-                    var messageId = _settings.IDs.ReactionRoleMessageId;
-                    var emojiKey = GetEmojiKey(reaction.Emote);
-
-                    if (_reactionRoles.TryGetValue(messageId, out var emojiMap) && emojiMap.TryGetValue(emojiKey, out var roleId)) {
-                        SocketGuildUser? guildUser = reaction.User.Value as SocketGuildUser;
-
-                        if (guildUser == null && channel.Value is SocketGuildChannel guildChannel) {
-                            guildUser = guildChannel.Guild.GetUser(reaction.UserId);
-                        }
-
-                        var role = (channel.Value as SocketGuildChannel)?.Guild.GetRole(roleId);
-                        if (guildUser != null && role != null) {
-                            await guildUser.AddRoleAsync(role);
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                //Console.WriteLine($"[ReactionRoleHandler] OnReactionAddedAsync Exception: {ex}");
-                await _logger.LogCriticalAsync("roles", "Error has occurd", ex);
-            }
+            _emojiToRoleId[rr.Emoji] = rr.RoleId;
         }
 
-        private async Task OnReactionRemovedAsync(Cacheable<IUserMessage, ulong> cache, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction) {
-            try {
-                if (reaction.User.IsSpecified && !reaction.User.Value.IsBot) {
-                    if (_settings.IDs?.ReactionRoleMessageId == null) {
-                        //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
-                        await _logger.LogCriticalAsync("roles", "Roles message not found");
-                        return;
-                    }
+        await _logger.LogInformationAsync("roles", $"Loaded {_emojiToRoleId.Count} reaction roles from settings.");
 
-                    var messageId = _settings.IDs.ReactionRoleMessageId;
-                    var emojiKey = GetEmojiKey(reaction.Emote);
+        // If you want the role color cycling, start it here (optional).
+        _ = RunRoleColorCycleAsync(ct);
+    }
 
-                    if (_reactionRoles.TryGetValue(messageId, out var emojiMap) && emojiMap.TryGetValue(emojiKey, out var roleId)) {
-                        SocketGuildUser? guildUser = reaction.User.Value as SocketGuildUser;
+    public Task AddReactionRoleAsync(string emoji, ulong roleId) {
+        if (string.IsNullOrWhiteSpace(emoji) || roleId == 0)
+            return Task.CompletedTask;
 
-                        if (guildUser == null && channel.Value is SocketGuildChannel guildChannel) {
-                            guildUser = guildChannel.Guild.GetUser(reaction.UserId);
-                        }
+        _emojiToRoleId[emoji] = roleId;
+        return Task.CompletedTask;
+    }
 
-                        var role = (channel.Value as SocketGuildChannel)?.Guild.GetRole(roleId);
-                        if (guildUser != null && role != null) {
-                            await guildUser.RemoveRoleAsync(role);
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                //Console.WriteLine($"[ReactionRoleHandler] OnReactionRemovedAsync Exception: {ex}");
-                await _logger.LogCriticalAsync("roles", "Error has occurd", ex);
-            }
-        }
+    private async Task OnReactionAddedAsync(
+        Cacheable<IUserMessage, ulong> cache,
+        Cacheable<IMessageChannel, ulong> channel,
+        SocketReaction reaction
+    ) {
+        try {
+            if (!reaction.User.IsSpecified) return;
+            if (reaction.User.Value.IsBot) return;
 
-        private async Task InitializeReactionRolesAsync() {
-            try {
-                if (_settings.IDs?.ReactionRoleMessageId == null) {
-                    //Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
-                    await _logger.LogCriticalAsync("roles", "Roles message not found");
-                    return;
-                }
+            if (_settings.IDs?.ReactionRoleMessageId is null or 0) return;
 
-                var messageId = _settings.IDs.ReactionRoleMessageId;
+            // Only react to the configured message
+            var configuredMessageId = _settings.IDs.ReactionRoleMessageId;
+            if (reaction.MessageId != configuredMessageId) return;
 
-                if (!_reactionRoles.ContainsKey(messageId)) {
-                    _reactionRoles[messageId] = [];
-                    //Console.WriteLine("[ReactionRoleHandler] Initializing Reaction Roles");
-                    await _logger.LogInformationAsync("roles", "Initializing Reaction Roles");
-                }
+            var emojiKey = GetEmojiKey(reaction.Emote);
 
-                // Load roles from settings (must be List<ReactionRole>)
-                foreach (var rr in _settings.ReactionRoles) {
-                    var emojiKey = rr.Emoji;
-                    await AddReactionRoleAsync(emojiKey, rr.RoleId);
-                }
+            if (!_emojiToRoleId.TryGetValue(emojiKey, out var roleId))
+                return;
 
-            } catch (Exception ex) {
-                //Console.WriteLine($"[ReactionRoleHandler] InitializeReactionRoles Exception: {ex}");
-                await _logger.LogCriticalAsync("roles", "Error has occurd", ex);
-            }
-        }
+            var guildUser = await ResolveGuildUserAsync(channel, reaction.UserId, reaction.User.Value);
+            if (guildUser == null) return;
 
-        private async void ChangeRoleColor(object? state) {
-            var guild = _client.Guilds.FirstOrDefault();
-            if (guild == null) return;
-
-            var role = guild.GetRole(_roleId);
+            var guild = (channel.Value as SocketGuildChannel)?.Guild ?? guildUser.Guild;
+            var role = guild.GetRole(roleId);
             if (role == null) return;
 
-            var color = new Color((uint)_random.Next(0x1000000));
-            await role.ModifyAsync(r => r.Color = color);
-        }
-
-        private static string GetEmojiKey(IEmote emote) {
-            return emote switch {
-                Emote custom => $"<:{custom.Name}:{custom.Id}>",
-                Emoji emoji => emoji.Name,
-                _ => emote.ToString()!
-            };
+            await guildUser.AddRoleAsync(role);
+        } catch (Exception ex) {
+            await _logger.LogErrorAsync("roles", "Error handling ReactionAdded.", ex);
         }
     }
 
-    // Expected format in SettingsHandler.Instance.ReactionRoles
-    public class ReactionRole {
-        public string Emoji { get; set; } = string.Empty;
-        public ulong RoleId { get; set; }
+    private async Task OnReactionRemovedAsync(
+        Cacheable<IUserMessage, ulong> cache,
+        Cacheable<IMessageChannel, ulong> channel,
+        SocketReaction reaction
+    ) {
+        try {
+            if (!reaction.User.IsSpecified) return;
+            if (reaction.User.Value.IsBot) return;
+
+            if (_settings.IDs?.ReactionRoleMessageId is null or 0) return;
+
+            var configuredMessageId = _settings.IDs.ReactionRoleMessageId;
+            if (reaction.MessageId != configuredMessageId) return;
+
+            var emojiKey = GetEmojiKey(reaction.Emote);
+
+            if (!_emojiToRoleId.TryGetValue(emojiKey, out var roleId))
+                return;
+
+            var guildUser = await ResolveGuildUserAsync(channel, reaction.UserId, reaction.User.Value);
+            if (guildUser == null) return;
+
+            var guild = (channel.Value as SocketGuildChannel)?.Guild ?? guildUser.Guild;
+            var role = guild.GetRole(roleId);
+            if (role == null) return;
+
+            await guildUser.RemoveRoleAsync(role);
+        } catch (Exception ex) {
+            await _logger.LogErrorAsync("roles", "Error handling ReactionRemoved.", ex);
+        }
     }
+
+    private static async Task<SocketGuildUser?> ResolveGuildUserAsync(
+        Cacheable<IMessageChannel, ulong> channel,
+        ulong userId,
+        IUser reactionUser
+    ) {
+        if (reactionUser is SocketGuildUser sgu)
+            return sgu;
+
+        if (channel.Value is SocketGuildChannel guildChannel)
+            return guildChannel.Guild.GetUser(userId);
+
+        return null;
+    }
+
+    private async Task RunRoleColorCycleAsync(CancellationToken ct) {
+        try {
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(45));
+
+            while (!ct.IsCancellationRequested && await timer.WaitForNextTickAsync(ct)) {
+                var guild = _client.Guilds.FirstOrDefault();
+                if (guild == null) continue;
+
+                var role = guild.GetRole(_roleIdToColorCycle);
+                if (role == null) continue;
+
+                var color = new Color((uint)Random.Shared.Next(0x1000000));
+                await role.ModifyAsync(r => r.Color = color);
+            }
+        } catch (OperationCanceledException) {
+            // ok
+        } catch (Exception ex) {
+            await _logger.LogErrorAsync("roles", "Role color cycle failed.", ex);
+        }
+    }
+
+    private static string GetEmojiKey(IEmote emote) =>
+        emote switch {
+            Emote custom => $"<:{custom.Name}:{custom.Id}>",
+            Emoji emoji => emoji.Name,
+            _ => emote.ToString()!
+        };
 }

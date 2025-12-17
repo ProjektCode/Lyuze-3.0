@@ -1,5 +1,6 @@
 ﻿using Discord.Interactions;
 using Lyuze.Core.Services;
+using Lyuze.Core.Services.Extensions;
 using Lyuze.Core.Services.Interfaces;
 using Lyuze.Core.Utilities;
 
@@ -19,10 +20,10 @@ namespace Lyuze.Core.Modules {
 
             if (success) {
                 await FollowupAsync($"✅ Sent anime ID `{id}` to n8n!", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             } else {
                 await FollowupAsync($"⚠️ Failed to send anime ID `{id}` to n8n.", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
         }
 
@@ -36,10 +37,10 @@ namespace Lyuze.Core.Modules {
 
             if (success) {
                 await FollowupAsync($"🗑️ Untracked anime ID `{id}` in n8n!", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync( );
             } else {
                 await FollowupAsync($"⚠️ Failed to untrack anime ID `{id}`.", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
         }
 
@@ -49,10 +50,10 @@ namespace Lyuze.Core.Modules {
             bool success = await _n8nService.SendActionAsync("list", Context.Channel.Id); //Figure out how to send the correct channel id where the command came from.
             if (success) {
                 await FollowupAsync($"✅ Sent action `{"list"}` to n8n!", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             } else {
                 await FollowupAsync($"⚠️ Failed to send action `{"list"}` to n8n.", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
 
         }

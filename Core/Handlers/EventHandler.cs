@@ -3,10 +3,10 @@ using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Configuration;
+using Lyuze.Core.Services;
 using Lyuze.Core.Services.Database;
 using Lyuze.Core.Services.Images;
 using Lyuze.Core.Services.Interfaces;
-using Lyuze.Core.Utilities;
 
 namespace Lyuze.Core.Handlers {
     public class EventHandler {
@@ -15,19 +15,22 @@ namespace Lyuze.Core.Handlers {
         private readonly ILoggingService _logger;
         private readonly SettingsConfig _settings;
         private readonly LevelingService _levelingService;
-        private readonly MasterUtilities _utils;
         private readonly IPlayerService _playerService;
+        private readonly IStatusProvider _statusProviderService;
+        private readonly ReactionRolesService _reactionRolesService;
 
         private Timer? _statusTimer;
 
-        public EventHandler(DiscordSocketClient client, InteractionService interactions, ILoggingService logger, SettingsConfig settings, LevelingService levelingService, MasterUtilities utils, IPlayerService playerService) {
+        public EventHandler(DiscordSocketClient client, InteractionService interactions, ILoggingService logger, SettingsConfig settings, LevelingService levelingService, IPlayerService playerService, IStatusProvider statusProviderService, ReactionRolesService reactionRolesService) {
 
             _client = client;
             _interactions = interactions;
             _logger = logger;
             _settings = settings;
             _levelingService = levelingService;
-            _utils = utils;
+            _playerService = playerService;
+            _statusProviderService = statusProviderService;
+            _reactionRolesService = reactionRolesService;
 
             // Register events
             _client.UserJoined += OnUserJoinedAsync;
@@ -37,7 +40,6 @@ namespace Lyuze.Core.Handlers {
 
             _interactions.SlashCommandExecuted += OnSlashCommandAsync;
             _interactions.Log += OnCommandLogAsync;
-            _playerService = playerService;
         }
 
         private async Task OnUserJoinedAsync(SocketGuildUser user) {
@@ -108,23 +110,21 @@ namespace Lyuze.Core.Handlers {
                 await _client.SetStatusAsync(UserStatus.Online);
 
                 // pick a starting index safely
-                var statuses = _settings.Status ?? ["Online", "Idle", "Do Not Disturb"];
-                int i = _utils.RandomListIndex(statuses);
+                var statuses = _settings.Status;
+                int i = _statusProviderService.GetRandomStatusIndex(statuses);
 
                 // Keep a reference so the timer isn't GC'd
                 _statusTimer = new Timer(async _ => {
                     try {
-                        var text = _utils.StatusList[i];
-                        if (!string.IsNullOrWhiteSpace(text)) {
-                            await _client.SetGameAsync(text, type: ActivityType.Listening);
-                        }
 
-                        i = (i + 1) % _utils.StatusList.Count;
+                        i = (i + 1) % statuses.Count;
                     } catch (Exception ex) {
                         await _logger.LogCriticalAsync("discord",
                             $"Exception in status rotation timer: {ex.Message}", ex);
                     }
                 }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(120));
+
+                await _reactionRolesService.InitializeAsync();
 
                 await _logger.LogInformationAsync("discord", "Bot is ready and commands are registered.");
             } catch (Exception ex) {

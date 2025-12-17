@@ -9,7 +9,7 @@ namespace Lyuze.Core.Services.Interfaces {
         Task LogInformationAsync(string source, string message);
 
         Task LogWarningAsync(string source, string message);
-        Task LogErrorAsync(string message, Exception exception, string source);
+        Task LogErrorAsync(string source, string message, Exception exception);
 
         Task LogSetupAsync(string source, string message);
     }

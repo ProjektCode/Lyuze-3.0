@@ -9,6 +9,7 @@ using Lyuze.Core.Handlers;
 using Lyuze.Core.Services;
 using Lyuze.Core.Services.Database;
 using Lyuze.Core.Services.Interfaces;
+using Lyuze.Core.Services.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -61,6 +62,10 @@ namespace Lyuze {
                     services.AddSingleton<ReactionRolesService>();
                     services.AddSingleton<LevelingService>();
                     services.AddSingleton<N8nService>();
+
+                    //Providers
+                    services.AddSingleton<IStatusProvider, StatusProvider>();
+                    services.AddSingleton<IEmbedColorProvider, EmbedColorProvider>();
 
                     // Typed HttpClient for WaifuService
                     services.AddHttpClient<WaifuService>();

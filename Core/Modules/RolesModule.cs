@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Configuration;
 using Lyuze.Core.Services;
+using Lyuze.Core.Services.Extensions;
 using Lyuze.Core.Services.Interfaces;
 using Lyuze.Core.Utilities;
 using System.Data;
@@ -47,7 +48,7 @@ namespace Lyuze.Core.Modules {
                 .WithSelectMenu(selectMenuBuilder);
 
             await RespondAsync($"Select a role to remove from {user.Username}:", components: componentBuilder.Build(), ephemeral: true);
-            await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+            await Context.DelayDeleteOriginalAsync();
         }
 
         [ComponentInteraction("select_role_to_remove")]
@@ -55,13 +56,13 @@ namespace Lyuze.Core.Modules {
         public async Task SelectRoleRemoval(string[] selectedValues) {
             if (selectedValues.Length == 0) {
                 await RespondAsync("No role selected.", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
                 return;
             }
 
             if (!ulong.TryParse(selectedValues[0], out ulong roleId)) {
                 await RespondAsync("Invalid role selected.", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
                 return;
             }
 
@@ -70,13 +71,13 @@ namespace Lyuze.Core.Modules {
 
             if (roleToRemove == null) {
                 await RespondAsync("Role not found.", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
                 return;
             }
 
             await guildUser.RemoveRoleAsync(roleToRemove);
             await RespondAsync($"Role '{roleToRemove.Name}' has been removed from {guildUser.Username}.", ephemeral: true);
-            await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+            await Context.DelayDeleteOriginalAsync();
         }
 
         [SlashCommand("setup_reaction_roles", "Set up the reaction roles embed message.")]
@@ -123,11 +124,11 @@ namespace Lyuze.Core.Modules {
                 await message.AddReactionsAsync(emotes.ToArray());
 
                 await FollowupAsync("Reaction Roles have been set up.", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             } catch (Exception ex) {
                 Console.WriteLine(ex.ToString());
                 await FollowupAsync("An error occurred. Command failed.");
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
         }
 
@@ -228,12 +229,12 @@ namespace Lyuze.Core.Modules {
                 await _settingsService.SaveAsync();
 
                 await FollowupAsync("Reaction has been added and saved.", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.ToString());
                 await FollowupAsync($"An error has occurred: {ex.Message}");
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
         }
 

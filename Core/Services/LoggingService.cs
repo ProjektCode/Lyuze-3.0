@@ -61,7 +61,7 @@ namespace Lyuze.Core.Services {
         public Task LogWarningAsync(string source, string message) =>
             LogAsync(source, LogSeverity.Warning, message);
 
-        public Task LogErrorAsync(string message, Exception exception, string source) =>
+        public Task LogErrorAsync(string source, string message, Exception exception) =>
             LogAsync(source, LogSeverity.Error, message, exception);
 
         private static string SourceToString(string src) {
@@ -88,6 +88,7 @@ namespace Lyuze.Core.Services {
                 "join" => "JOINN",
                 "profile" => "PRFIL",
                 "waifu" => "WAIFU",
+                "reaction-roles" => "RROLS",
                 _ => src
             };
         }

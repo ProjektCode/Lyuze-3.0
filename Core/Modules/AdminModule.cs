@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Lyuze.Core.Services.Extensions;
 using Lyuze.Core.Services.Images;
 using Lyuze.Core.Utilities;
 using System.Diagnostics;
@@ -17,12 +18,12 @@ namespace Lyuze.Core.Modules {
             try {
                 if (amount <= 0) {
                     await FollowupAsync("Amount of messages to remove must be greater than 0");
-                    await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                    await Context.DelayDeleteOriginalAsync();
                     return;
                 }
                 if (amount > 1000) {
                     await FollowupAsync("Amount must be 1000 or less.");
-                    await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                    await Context.DelayDeleteOriginalAsync();
                     return;
                 }
 
@@ -32,18 +33,18 @@ namespace Lyuze.Core.Modules {
 
                 if (count == 0) {
                     await FollowupAsync("Nothing to delete.", ephemeral: true);
-                    await MasterUtilities.DelayAndDeleteResponseAsync(Context); ;
+                    await Context.DelayDeleteOriginalAsync();
                 } else {
                     await ((ITextChannel)Context.Channel).DeleteMessagesAsync(filteredMessages);
 
                     await FollowupAsync($"I've deleted {count} {(count > 1 ? "messages" : "message")}.", ephemeral: true);
-                    await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                    await Context.DelayDeleteOriginalAsync();
                 }
 
             } catch (Exception ex) {
                 Console.Write(ex.ToString());
                 await FollowupAsync("An error occured trying to purge the messages.");
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
 
         }
@@ -55,12 +56,12 @@ namespace Lyuze.Core.Modules {
             try {
                 await user.KickAsync(reason);
                 await RespondAsync($"User {user.Username} has been kicked for: {reason} - by {Context.User.Username}.");
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.ToString());
                 await RespondAsync("An error has occured trying to kick user", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
         }
 
@@ -71,12 +72,12 @@ namespace Lyuze.Core.Modules {
             try {
                 await Context.Guild.AddBanAsync(user,pruneDays, reason);
                 await RespondAsync($"User {user.Username} has been banned for: {reason} - by {Context.User.Username}.");
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
 
             } catch (Exception ex) {
                 Console.WriteLine(ex.ToString());
                 await RespondAsync("An error has occured trying to ban user", ephemeral: true);
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
         }
 
@@ -90,13 +91,13 @@ namespace Lyuze.Core.Modules {
 
                 foreach (Process p in Process.GetProcessesByName(currentProcessName)) {
                     await FollowupAsync("Goodbye");
-                    await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                    await Context.DelayDeleteOriginalAsync();
                     p.Kill();
                 }
             } catch (Exception ex) {
                 Console.WriteLine(ex.Message);
                 await FollowupAsync("An error has occurred while trying to kill the bot.");
-                await MasterUtilities.DelayAndDeleteResponseAsync(Context);
+                await Context.DelayDeleteOriginalAsync();
             }
 
         }
