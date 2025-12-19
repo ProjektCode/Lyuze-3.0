@@ -10,15 +10,11 @@ Leveling System
 	Profile Cards
 Image Based Commands
 	Waifu.pics
-	Nekos.life
 	Nekos.Best
 	SauceNAO
 	Trace.Moe
-	TenorAPI
 Anime & Otaku
 	Anime Lookup - AniList or JikanAPI
 	Seasonal Anime Schedule - AniList or JikanAPI
-	Waifu of the day
-	Animechan
 Misc
 	Quote system

@@ -18,7 +18,6 @@ namespace Lyuze.Core.Handlers {
         private readonly IPlayerService _playerService;
         private readonly IStatusProvider _statusProvider;
         private readonly ReactionRolesService _reactionRolesService;
-
         private CancellationTokenSource? _statusCts;
         private Task? _statusTask;
 

@@ -62,13 +62,15 @@ namespace Lyuze {
                     services.AddSingleton<ReactionRolesService>();
                     services.AddSingleton<LevelingService>();
                     services.AddSingleton<N8nService>();
+                    services.AddSingleton<WaifuService>();
+                    services.AddSingleton<AnimeQuoteService>();
 
                     //Providers
                     services.AddSingleton<IStatusProvider, StatusProvider>();
                     services.AddSingleton<IEmbedColorProvider, EmbedColorProvider>();
 
-                    // Typed HttpClient for WaifuService
-                    services.AddHttpClient<WaifuService>();
+                    // Http client services
+                    services.AddHttpClient<IApiClient, ApiClient>();
 
                     // Host logging configuration
                     services.AddLogging(logging => {
@@ -76,10 +78,16 @@ namespace Lyuze {
                         logging.AddSimpleConsole();
                         logging.SetMinimumLevel(LogLevel.Information);
 
+                        //Logging filters to remove noisy logs
                         logging.AddFilter("System.Net.Http.HttpClient.WaifuService.LogicalHandler", LogLevel.Warning);
                         logging.AddFilter("System.Net.Http.HttpClient.WaifuService.ClientHandler", LogLevel.Warning);
+                        logging.AddFilter("System.Net.Http.HttpClient.AnimeQuoteService.LogicalHandler", LogLevel.Warning);
+                        logging.AddFilter("System.Net.Http.HttpClient.AnimeQuoteService.ClientHandler", LogLevel.Warning);
                         logging.AddFilter("Microsoft.Extensions.Http", LogLevel.Warning);
                         logging.AddFilter("Microsoft.Extensions.Http.DefaultHttpClientFactory", LogLevel.Warning);
+                        logging.AddFilter("System.Net.Http.HttpClient.IApiClient.LogicalHandler", LogLevel.Warning);
+                        logging.AddFilter("System.Net.Http.HttpClient.IApiClient.ClientHandler", LogLevel.Warning);
+
                         logging.AddFilter("Lyuze", LogLevel.Debug);
                     });
                 })

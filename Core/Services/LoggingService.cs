@@ -89,6 +89,7 @@ namespace Lyuze.Core.Services {
                 "profile" => "PRFIL",
                 "waifu" => "WAIFU",
                 "reaction-roles" => "RROLS",
+                "anime-quote" => "AQUOT",
                 _ => src
             };
         }

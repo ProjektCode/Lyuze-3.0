@@ -3,7 +3,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Services.Extensions;
 using Lyuze.Core.Services.Images;
-using Lyuze.Core.Utilities;
 using System.Diagnostics;
 
 namespace Lyuze.Core.Modules {
@@ -12,42 +11,83 @@ namespace Lyuze.Core.Modules {
         [SlashCommand("purge", "Purge messages from the last 14 days")]
         [RequireBotPermission(GuildPermission.ManageMessages)]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task PurgeCmd(int amount = 1000) {
+        public async Task PurgeCmd(int amount = 200) {
             await DeferAsync(ephemeral: true);
 
-            try {
-                if (amount <= 0) {
-                    await FollowupAsync("Amount of messages to remove must be greater than 0");
-                    await Context.DelayDeleteOriginalAsync();
-                    return;
-                }
-                if (amount > 1000) {
-                    await FollowupAsync("Amount must be 1000 or less.");
-                    await Context.DelayDeleteOriginalAsync();
-                    return;
-                }
-
-                var messages = await Context.Channel.GetMessagesAsync(amount + 1).FlattenAsync();
-                var filteredMessages = messages.Where(x => (DateTimeOffset.UtcNow - x.Timestamp).TotalDays <= 14).ToList();
-                var count = filteredMessages.Count;
-
-                if (count == 0) {
-                    await FollowupAsync("Nothing to delete.", ephemeral: true);
-                    await Context.DelayDeleteOriginalAsync();
-                } else {
-                    await ((ITextChannel)Context.Channel).DeleteMessagesAsync(filteredMessages);
-
-                    await FollowupAsync($"I've deleted {count} {(count > 1 ? "messages" : "message")}.", ephemeral: true);
-                    await Context.DelayDeleteOriginalAsync();
-                }
-
-            } catch (Exception ex) {
-                Console.Write(ex.ToString());
-                await FollowupAsync("An error occured trying to purge the messages.");
+            if (amount <= 0) {
+                await FollowupAsync("Amount must be greater than 0.", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
+                return;
             }
 
+            if (amount > 1000) {
+                await FollowupAsync("Amount must be 1000 or less.", ephemeral: true);
+                await Context.DelayDeleteOriginalAsync();
+                return;
+            }
+
+            try {
+                var channel = (ITextChannel)Context.Channel;
+                var cutoff = DateTimeOffset.UtcNow.AddDays(-14);
+
+                var toDelete = new List<IMessage>(capacity: Math.Min(amount, 1000));
+                ulong? beforeId = null;
+
+                while (toDelete.Count < amount) {
+                    var remaining = amount - toDelete.Count;
+                    var pageSize = Math.Min(100, remaining);
+
+                    IEnumerable<IMessage> page;
+
+                    if (beforeId.HasValue) {
+                        page = await Context.Channel
+                            .GetMessagesAsync(beforeId.Value, Direction.Before, pageSize)
+                            .FlattenAsync();
+                    } else {
+                        page = await Context.Channel
+                            .GetMessagesAsync(pageSize)
+                            .FlattenAsync();
+                    }
+
+                    var pageList = page.ToList();
+                    if (pageList.Count == 0)
+                        break;
+
+                    foreach (var msg in pageList) {
+                        if (msg.Timestamp < cutoff) {
+                            beforeId = null;
+                            break;
+                        }
+
+                        if (msg is IUserMessage userMsg) {
+                            toDelete.Add(userMsg);
+                        }
+                    }
+
+                    beforeId = pageList.Last().Id;
+
+                    if (pageList.Last().Timestamp < cutoff)
+                        break;
+                }
+
+                if (toDelete.Count == 0) {
+                    await FollowupAsync("Nothing to delete (within 14 days).", ephemeral: true);
+                    await Context.DelayDeleteOriginalAsync();
+                    return;
+                }
+
+                // Bulk delete expects a collection
+                await channel.DeleteMessagesAsync(toDelete);
+
+                await FollowupAsync($"Deleted {toDelete.Count} message(s) from the last 14 days.", ephemeral: true);
+                await Context.DelayDeleteOriginalAsync();
+            } catch (Exception ex) {
+                Console.WriteLine(ex);
+                await FollowupAsync("An error occurred trying to purge messages.", ephemeral: true);
+                await Context.DelayDeleteOriginalAsync();
+            }
         }
+
 
         [SlashCommand("kick", "Kick user from the server")]
         [RequireBotPermission(GuildPermission.KickMembers)]

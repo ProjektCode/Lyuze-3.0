@@ -15,7 +15,7 @@ namespace Lyuze.Core.Modules {
             var imageUrl = await _waifuService.GetRandomWaifuPicAsync(tag);
 
             if (imageUrl is null) {
-                await FollowupAsync("I couldn't find a waifu image for that tag.");
+                await FollowupAsync("I couldn't find a waifu image for that tag or no image was found.");
                 return;
             }
 

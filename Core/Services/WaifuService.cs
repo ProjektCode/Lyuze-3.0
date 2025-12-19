@@ -1,50 +1,36 @@
-﻿using Lyuze.Core.Services.Interfaces;
-using Lyuze.Core.Models.API;
+﻿using Lyuze.Core.Models.API;
+using Lyuze.Core.Services.Interfaces;
 
 namespace Lyuze.Core.Services {
-
-    public class WaifuService(ILoggingService logger, HttpClient httpClient) {
+    public class WaifuService(ILoggingService logger, IApiClient apiClient) {
         private readonly ILoggingService _logger = logger;
-        private readonly HttpClient _httpClient = httpClient;
+        private readonly IApiClient _api = apiClient;
         private static readonly Random _rng = new();
 
-        public async Task<string?> GetRandomWaifuPicAsync(string tag) {
+        public async Task<string?> GetRandomWaifuPicAsync(string tag, CancellationToken ct = default) {
             if (string.IsNullOrWhiteSpace(tag)) {
                 await _logger.LogInformationAsync("waifu", "Empty tag received.");
                 return null;
             }
 
             var encodedTag = Uri.EscapeDataString(tag.Trim());
+            var url = $"https://api.waifu.im/search?included_tags={encodedTag}&limit=20";
 
-            try {
-                var response = await _httpClient.GetAsync($"https://api.waifu.im/search?included_tags={encodedTag}&limit=20");
+            var model = await _api.GetJsonAsync(source: "waifu", url: url, deserialize: Waifu.FromJson, ct: ct);
 
-                if (!response.IsSuccessStatusCode) {
-                    await _logger.LogWarningAsync("waifu",$"Failed to fetch waifu image. HTTP {(int)response.StatusCode}");
-                    return null;
-                }
-
-                var content = await response.Content.ReadAsStringAsync();
-                var waifuResponse = Waifu.FromJson(content);
-
-                if (waifuResponse.Images == null || waifuResponse.Images.Length == 0) {
-                    await _logger.LogWarningAsync("waifu", "No images found in the response.");
-                    return null;
-                }
-
-                var index = _rng.Next(waifuResponse.Images.Length);
-                var selectedImage = waifuResponse.Images[index];
-
-                if (selectedImage.Url == null) {
-                    await _logger.LogWarningAsync("waifu", "Selected image URL is null.");
-                    return null;
-                }
-
-                return selectedImage.Url.ToString();
-            } catch (Exception ex) {
-                await _logger.LogErrorAsync("waifu", "Unexpected exception in WaifuService.GetRandomWaifuPicAsync.", ex);
+            var images = model?.Images;
+            if (images == null || images.Length == 0) {
+                await _logger.LogWarningAsync("waifu", "No images found in the response.");
                 return null;
             }
+
+            var selected = images[_rng.Next(images.Length)];
+            if (selected.Url == null) {
+                await _logger.LogWarningAsync("waifu", "Selected image URL is null.");
+                return null;
+            }
+
+            return selected.Url.ToString();
         }
     }
 }

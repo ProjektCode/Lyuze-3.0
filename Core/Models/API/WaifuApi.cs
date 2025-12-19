@@ -25,8 +25,4 @@ namespace Lyuze.Core.Models.API {
 
     }
 
-    public static class Serialize {
-        public static string ToJson(this Waifu self) => JsonConvert.SerializeObject(self, Converter.Settings);
-    }
-
 }
