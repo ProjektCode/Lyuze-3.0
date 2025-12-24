@@ -2,14 +2,19 @@
 using Discord.Interactions;
 using Discord.Net.Providers.WS4Net;
 using Discord.WebSocket;
-using Lyuze.Core.Configuration;
-using Lyuze.Core.Database;
-using Lyuze.Core.Database.Model;
-using Lyuze.Core.Handlers;
-using Lyuze.Core.Services;
-using Lyuze.Core.Services.Database;
-using Lyuze.Core.Services.Interfaces;
-using Lyuze.Core.Services.Providers;
+using Lyuze.Core.Abstractions.Interfaces;
+using Lyuze.Core.Features.Anime;
+using Lyuze.Core.Features.Integrations.N8n;
+using Lyuze.Core.Features.Profiles;
+using Lyuze.Core.Features.Roles;
+using Lyuze.Core.Infrastructure.Configuration;
+using Lyuze.Core.Infrastructure.Database;
+using Lyuze.Core.Infrastructure.DiscordNet.Handlers;
+using Lyuze.Core.Infrastructure.Http;
+using Lyuze.Core.Infrastructure.Logging;
+using Lyuze.Core.Shared.Embeds;
+using Lyuze.Core.Shared.Embeds.Providers;
+using Lyuze.Core.Shared.Status;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -56,7 +61,7 @@ namespace Lyuze {
 
                     // Handlers
                     services.AddSingleton<InteractionHandler>();
-                    services.AddSingleton<Core.Handlers.EventHandler>();
+                    services.AddSingleton<Core.Infrastructure.DiscordNet.Handlers.EventHandler>();
 
                     // Bot services
                     services.AddSingleton<ReactionRolesService>();
@@ -64,6 +69,9 @@ namespace Lyuze {
                     services.AddSingleton<N8nService>();
                     services.AddSingleton<WaifuService>();
                     services.AddSingleton<AnimeQuoteService>();
+                    services.AddSingleton<TraceMoeService>();
+                    services.AddSingleton<EmbedService>();
+                    services.AddSingleton<SauceNaoService>();
 
                     //Providers
                     services.AddSingleton<IStatusProvider, StatusProvider>();
@@ -111,7 +119,7 @@ namespace Lyuze {
             var dbContext = serviceProvider.GetRequiredService<DatabaseContext>();
 
             // Force construction of event handler so it wires events
-            serviceProvider.GetRequiredService<Core.Handlers.EventHandler>();
+            serviceProvider.GetRequiredService<Core.Infrastructure.DiscordNet.Handlers.EventHandler>();
 
             await client.LoginAsync(TokenType.Bot, settings.Discord.Token);
             await client.StartAsync();
