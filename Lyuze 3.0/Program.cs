@@ -25,12 +25,6 @@ namespace Lyuze {
         public static Task Main() => MainAsync();
 
         public static async Task MainAsync() {
-            // Load settings once and initialize DB before building the host
-            //await SettingsConfig.LoadAsync();
-            //var settings = SettingsConfig.Instance;
-
-            //var dbContext = new DatabaseContext(settings);
-            //Player.Initialize(dbContext);
 
             using IHost host = Host.CreateDefaultBuilder()
                 .ConfigureServices((_, services) => {
@@ -72,6 +66,7 @@ namespace Lyuze {
                     services.AddSingleton<TraceMoeService>();
                     services.AddSingleton<EmbedService>();
                     services.AddSingleton<SauceNaoService>();
+                    services.AddSingleton<ProfileService>();
 
                     //Providers
                     services.AddSingleton<IStatusProvider, StatusProvider>();

@@ -69,7 +69,6 @@ namespace Lyuze.Core.Infrastructure.Logging {
 
             return src.ToLower() switch {
                 "discord" => "DISCD",
-                "audio" => "AUDIO",
                 "admin" => "ADMIN",
                 "gateway" => "GTWAY",
                 "blacklist" => "BLAKL",
@@ -80,10 +79,6 @@ namespace Lyuze.Core.Infrastructure.Logging {
                 "roles" => "ROLES",
                 "jikan" => "JIKAN",
                 "image" => "IMAGE",
-                "fun" => "FUNCS",
-                "general" => "GENRL",
-                "backgrounds" => "BACKG",
-                "gifs" => "GIFSS",
                 "deleted" => "DELET",
                 "join" => "JOINN",
                 "profile" => "PRFIL",
@@ -92,6 +87,8 @@ namespace Lyuze.Core.Infrastructure.Logging {
                 "anime-quote" => "AQUOT",
                 "tracemoe" => "TRACE",
                 "saucenao" => "SAUCE",
+                "embedservice" => "EMBED",
+                "profileservice" => "PROFL",
                 _ => src
             };
         }

@@ -22,7 +22,7 @@ namespace Lyuze.Core.Features.Anime {
         }
 
         [SlashCommand("trace", "Find the anime from an image (URL or upload)")]
-            public async Task TraceMoe([Summary("image", "Upload an image")] IAttachment? image = null, [Summary("url", "Direct image URL")] string? url = null) {
+        public async Task TraceMoe([Summary("image", "Upload an image")] IAttachment? image = null, [Summary("url", "Direct image URL")] string? url = null) {
                 await DeferAsync();
 
                 // Require one or the other
@@ -48,23 +48,31 @@ namespace Lyuze.Core.Features.Anime {
             }
 
         [SlashCommand("sauce", "Find the source of an image (URL or upload)")]
-            public async Task SauceNao([Summary("image", "Upload an image")] IAttachment? image = null, [Summary("url", "Direct image URL")] string? url = null) {
-                await DeferAsync();
-                // Require one or the other
-                if (image is null && string.IsNullOrWhiteSpace(url)) {
-                    await FollowupAsync("Provide an image attachment or a URL.");
+        public async Task SauceNao([Summary("image", "Upload an image")] IAttachment? image = null, [Summary("url", "Direct image URL")] string? url = null) {
+            await DeferAsync();
+
+            // Require one or the other
+            if (image is null && string.IsNullOrWhiteSpace(url)) {
+                await FollowupAsync("Provide an image attachment or a URL.");
+                return;
+            }
+
+            string finalUrl;
+
+            // If attachment provided, validate it's an image
+            if (image is not null) {
+                if (!IsImageAttachment(image)) {
+                    await FollowupAsync("That attachment doesn't look like an image. Please upload a PNG/JPG/GIF/WebP.");
                     return;
                 }
-                // If attachment provided, validate it's an image
-                if (image is not null) {
-                    if (!IsImageAttachment(image)) {
-                        await FollowupAsync("That attachment doesn't look like an image. Please upload a PNG/JPG/GIF/WebP.");
-                        return;
-                    }
-                    url = image.Url; // Discord-hosted CDN URL
-                }
 
-            var result = await _sauceNaoService.GetSauceFromImageUrlAsync(url);
+                finalUrl = image.Url; // non-null
+            } else {
+                finalUrl = url!; // safe due to earlier guard
+            }
+
+            var result = await _sauceNaoService.GetSauceFromImageUrlAsync(finalUrl);
+
 
             if (result.FileBytes is not null && result.FileName is not null) {
                 using var ms = new MemoryStream(result.FileBytes);

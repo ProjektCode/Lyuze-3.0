@@ -11,8 +11,6 @@ Leveling System
 Image Based Commands
 	Waifu.pics
 	Nekos.Best
-	SauceNAO
-	Trace.Moe
 Anime & Otaku
 	Anime Lookup - AniList or JikanAPI
 	Seasonal Anime Schedule - AniList or JikanAPI
