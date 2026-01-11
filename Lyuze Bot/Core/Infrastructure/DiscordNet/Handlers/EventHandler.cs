@@ -7,6 +7,7 @@ using Lyuze.Core.Features.Profiles;
 using Lyuze.Core.Features.Roles;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Shared.Images;
+using Lyuze.Core.Shared.Images.Primitives;
 
 namespace Lyuze.Core.Infrastructure.DiscordNet.Handlers {
     public class EventHandler {
@@ -18,10 +19,14 @@ namespace Lyuze.Core.Infrastructure.DiscordNet.Handlers {
         private readonly IPlayerService _playerService;
         private readonly IStatusProvider _statusProvider;
         private readonly ReactionRolesService _reactionRolesService;
+        private readonly ImageFetcher _imageFetcher;
+        private readonly ColorUtils _colorUtils;
+
         private CancellationTokenSource? _statusCts;
         private Task? _statusTask;
 
-        public EventHandler(DiscordSocketClient client, InteractionService interactions, ILoggingService logger, SettingsConfig settings, LevelingService levelingService, IPlayerService playerService, IStatusProvider statusProvider, ReactionRolesService reactionRolesService) {
+        public EventHandler(DiscordSocketClient client, InteractionService interactions, ILoggingService logger, SettingsConfig settings, LevelingService levelingService,
+            IPlayerService playerService, IStatusProvider statusProvider, ReactionRolesService reactionRolesService, ImageFetcher imageFetcher, ColorUtils colorUtils) {
 
             _client = client;
             _interactions = interactions;
@@ -31,6 +36,8 @@ namespace Lyuze.Core.Infrastructure.DiscordNet.Handlers {
             _playerService = playerService;
             _statusProvider = statusProvider;
             _reactionRolesService = reactionRolesService;
+            _imageFetcher = imageFetcher;
+            _colorUtils = colorUtils;
 
             // Register events
             _client.UserJoined += OnUserJoinedAsync;
@@ -45,6 +52,9 @@ namespace Lyuze.Core.Infrastructure.DiscordNet.Handlers {
         private async Task OnUserJoinedAsync(SocketGuildUser user) {
             ulong? roleId = _settings.IDs?.JoinRoleId;
             ulong? welcomeChannelId = _settings.IDs?.WelcomeId;
+
+            if(!await _playerService.HasProfileAsync(user)) await _playerService.CreateProfileAsync(user);
+            var player = await _playerService.GetUserAsync(user);
 
             try {
                 // Assign join role
@@ -67,17 +77,25 @@ namespace Lyuze.Core.Infrastructure.DiscordNet.Handlers {
                     int index = Random.Shared.Next(_settings.WelcomeMessage.Count);
                     string message = _settings.WelcomeMessage[index];
 
-                    string path = await ImageGenerator.CreateBannerImageAsync(
+                    var img = await ImageGenerator.CreateWelcomeBannerAsync(
                         user,
+                        player.Background,
                         message,
-                        "Welcome to the server.");
+                        "Welcome to the server.",
+                        _imageFetcher,
+                        _colorUtils);
 
                     var channel = user.Guild.GetTextChannel(welcomeChannelId.Value);
                     if (channel != null) {
-                        await channel.SendFileAsync(path);
+                        if (img is null) {
+                            await channel.SendMessageAsync($"Welcome {user.Mention}!");
+                            await _logger.LogWarningAsync("join", $"Failed to generate welcome banner for {user.Username} ({user.Id}) because img was null. sent text-only welcome.");
+                            return;
+                        }
+                        await using var ms = new MemoryStream(img);
+                        await channel.SendFileAsync(ms, $"welcome-{user.Username}.png");
                     }
 
-                    ImageUtils.DeleteImageFile(path);
                 }
             } catch (Exception ex) {
                 await _logger.LogCriticalAsync("join",

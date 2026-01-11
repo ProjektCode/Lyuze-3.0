@@ -6,10 +6,11 @@ using Lyuze.Core.Features.Profiles;
 using Lyuze.Core.Abstractions.Interfaces;
 
 namespace Lyuze.Core.Shared.Embeds {
-    public class EmbedService(IEmbedColorProvider embedColorService, IPlayerService playerService, ILoggingService loggingService) {
+    public class EmbedService(IEmbedColorProvider embedColorService, IPlayerService playerService, ILoggingService loggingService, ColorUtils colorUtils) {
         private readonly IPlayerService _playerService = playerService;
         private readonly IEmbedColorProvider _embedColorService = embedColorService;
         private readonly ILoggingService _loggingService = loggingService;
+        private readonly ColorUtils _colorUtils = colorUtils;
 
         // Private helper to create embed builders easily
         private EmbedBuilder CreateEmbed(string title, string description, Color? color) {
@@ -42,7 +43,7 @@ namespace Lyuze.Core.Shared.Embeds {
                 var embed = new EmbedBuilder {
                     Title = $"{user.Username}'s Profile | Level - {player.Level} ({player.XP}/{requiredXp})",
                     ImageUrl = player.Background,
-                    Color = new Color(await ColorUtils.RandomColorFromUrlAsync(player.Background)),
+                    Color = new Color(await _colorUtils.RandomColorFromUrlAsync(player.Background)),
                     ThumbnailUrl = user.GetAvatarUrl(ImageFormat.Auto, 256) ?? user.GetDefaultAvatarUrl(),
                     Timestamp = DateTimeOffset.UtcNow,
                     Footer = new EmbedFooterBuilder {
@@ -82,7 +83,7 @@ namespace Lyuze.Core.Shared.Embeds {
                 var embed = new EmbedBuilder {
                     Title = "Profile Updated",
                     Description = $"{user.Username}'s {UpdatedSection} has been updated with: {entry}.",
-                    Color = new Color(await ColorUtils.RandomColorFromUrlAsync(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())),
+                    Color = new Color(await _colorUtils.RandomColorFromUrlAsync(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())),
                     ThumbnailUrl = user.GetAvatarUrl(ImageFormat.Auto, 256) ?? user.GetDefaultAvatarUrl(),
                     Timestamp = DateTimeOffset.UtcNow,
                     Footer = new EmbedFooterBuilder {

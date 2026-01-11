@@ -6,10 +6,11 @@ using Lyuze.Core.Shared.Embeds;
 using Lyuze.Core.Shared.Images;
 
 namespace Lyuze.Core.Features.Anime {
-    public class TraceMoeService(ILoggingService logger, IApiClient apiClient, EmbedService embedService) {
+    public class TraceMoeService(ILoggingService logger, IApiClient apiClient, EmbedService embedService, ColorUtils colorUtils) {
         private readonly ILoggingService _logger = logger;
         private readonly IApiClient _api = apiClient;
         private readonly EmbedService _embedService = embedService;
+        private readonly ColorUtils _colorUtils = colorUtils;
 
 
         public async Task<Embed> GetAnimeFromImageUrlAsync(string imageUrl, CancellationToken ct = default) {
@@ -37,7 +38,7 @@ namespace Lyuze.Core.Features.Anime {
                                  $"**Similarity:** {topResult.Similarity:P2}")
                 .WithImageUrl(topResult.Image ?? string.Empty)
                 .WithUrl(topResult.Video ?? string.Empty)
-                .WithColor(await ColorUtils.RandomColorFromUrlAsync(topResult.Image ?? ImageConfig.BackupImageUrl))
+                .WithColor(new Color(await _colorUtils.RandomColorFromUrlAsync(topResult.Image ?? ImageConfig.BackupImageUrl, ct)))
                 .Build();
 
             return embed;

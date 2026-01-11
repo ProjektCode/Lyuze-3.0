@@ -14,6 +14,8 @@ using Lyuze.Core.Infrastructure.Http;
 using Lyuze.Core.Infrastructure.Logging;
 using Lyuze.Core.Shared.Embeds;
 using Lyuze.Core.Shared.Embeds.Providers;
+using Lyuze.Core.Shared.Images;
+using Lyuze.Core.Shared.Images.Primitives;
 using Lyuze.Core.Shared.Status;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -67,6 +69,8 @@ namespace Lyuze {
                     services.AddSingleton<EmbedService>();
                     services.AddSingleton<SauceNaoService>();
                     services.AddSingleton<ProfileService>();
+                    services.AddSingleton<ImageFetcher>();
+                    services.AddSingleton<ColorUtils>();
 
                     //Providers
                     services.AddSingleton<IStatusProvider, StatusProvider>();

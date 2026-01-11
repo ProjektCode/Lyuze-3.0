@@ -1,11 +1,17 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Extensions;
+using Lyuze.Core.Shared.Images;
+using Lyuze.Core.Shared.Images.Primitives;
 using System.Diagnostics;
 
 namespace Lyuze.Core.Features.Admin {
-    public class AdminModule() : InteractionModuleBase<SocketInteractionContext> {
+    public class AdminModule(IPlayerService playerService, ImageFetcher imageFetcher, ColorUtils colorUtils) : InteractionModuleBase<SocketInteractionContext> {
+        private readonly IPlayerService _playerService = playerService;
+        private readonly ImageFetcher _imageFetcher = imageFetcher;
+        private readonly ColorUtils _colorUtils = colorUtils;
 
         [SlashCommand("purge", "Purge messages from the last 14 days")]
         [RequireBotPermission(GuildPermission.ManageMessages)]
@@ -141,10 +147,41 @@ namespace Lyuze.Core.Features.Admin {
 
         }
 
-        //[SlashCommand("test", "test command")]
-        //[RequireOwner]
-        //public async Task TestCommand() {
+        [SlashCommand("test", "test command")]
+        [RequireOwner]
+        public async Task TestCommand() {
 
-        //}
+            await DeferAsync();
+
+            if (Context.User is not SocketGuildUser user) {
+                await FollowupAsync("This command must be used in a guild.");
+                return;
+            }
+
+            // Ensure profile exists
+            var player = await _playerService.GetUserAsync(user);
+            if (player is null) {
+                await FollowupAsync("No player profile found.");
+                return;
+            }
+
+            // Generate image
+            var imageBytes = await ImageGenerator.CreateWelcomeBannerAsync(
+                user,
+                player.Background,
+                $"Welcome, {user.Username}!",
+                "Image test successful",
+                _imageFetcher,
+                _colorUtils
+            );
+
+            // Send image as attachment
+            await using var ms = new MemoryStream(imageBytes);
+            await FollowupWithFileAsync(
+                text: "✅ Image generated successfully!",
+                attachment: new FileAttachment(ms, "welcome-test.png")
+            );
+
+        }
     }
 }

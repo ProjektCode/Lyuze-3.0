@@ -5,9 +5,10 @@ using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Shared.Images;
 
 namespace Lyuze.Core.Features.Profiles {
-    public class LevelingService(IPlayerService player) {
+    public class LevelingService(IPlayerService player, ColorUtils colorUtils) {
 
         private readonly IPlayerService _player = player;
+        private readonly ColorUtils _colorUtils = colorUtils;
 
         // Instance-level state instead of static
         private readonly List<Message> _msgList = [];
@@ -44,7 +45,7 @@ namespace Lyuze.Core.Features.Profiles {
                 EmbedBuilder embed = new() {
                     Title = $"{user.Username} has reached level {player.Level}!",
                     Description = $"{LevelEquation(player.Level)} XP needed for the next level.",
-                    Color = new Color(await ColorUtils.RandomColorFromUrlAsync(avatarUrl)),
+                    Color = new Color(await _colorUtils.RandomColorFromUrlAsync(avatarUrl)),
                     ThumbnailUrl = avatarUrl
                 };
 
