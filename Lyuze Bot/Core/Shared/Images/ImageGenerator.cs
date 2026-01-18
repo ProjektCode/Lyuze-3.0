@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using Lyuze.Core.Infrastructure.Configuration;
+using Lyuze.Core.Shared.Images.Layouts;
 using Lyuze.Core.Shared.Images.Primitives;
 using System.Drawing;
 using System.Drawing.Drawing2D;
