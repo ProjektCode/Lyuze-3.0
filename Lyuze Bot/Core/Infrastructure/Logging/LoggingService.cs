@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Lyuze.Core.Abstractions.Interfaces;
 using Pastel;
 using System.Text;
@@ -89,6 +89,10 @@ namespace Lyuze.Core.Infrastructure.Logging {
                 "saucenao" => "SAUCE",
                 "embedservice" => "EMBED",
                 "profileservice" => "PROFL",
+                "startup" => "START",
+                "host" => "HOSTN",
+                "interact" => "INTRC",
+                "n8n" => "N8NWH",
                 _ => src
             };
         }

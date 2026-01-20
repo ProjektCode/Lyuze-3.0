@@ -1,4 +1,4 @@
-﻿using Discord.WebSocket;
+using Discord.WebSocket;
 using MongoDB.Driver;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Infrastructure.Database;
@@ -39,22 +39,22 @@ namespace Lyuze.Core.Features.Profiles {
                 InfranctionMessages = []
             };
 
-            await _db.playerCollection.InsertOneAsync(player);
+            await _db.Players.InsertOneAsync(player);
         }
 
         public async Task<bool> HasProfileAsync(SocketGuildUser user) {
             var filter = Builders<PlayerModel>.Filter.Eq(x => x.DiscordID, user.Id);
-            return await _db.playerCollection.Find(filter).AnyAsync();
+            return await _db.Players.Find(filter).AnyAsync();
         }
 
         public async Task<PlayerModel> GetUserAsync(SocketGuildUser user) {
             var filter = Builders<PlayerModel>.Filter.Eq(x => x.DiscordID, user.Id);
-            return await _db.playerCollection.Find(filter).FirstOrDefaultAsync();
+            return await _db.Players.Find(filter).FirstOrDefaultAsync();
         }
 
         public async Task UpdateUserAsync(SocketGuildUser user, PlayerModel player) {
             var filter = Builders<PlayerModel>.Filter.Eq(x => x.DiscordID, user.Id);
-            await _db.playerCollection.ReplaceOneAsync(filter, player);
+            await _db.Players.ReplaceOneAsync(filter, player);
         }
     }
 }

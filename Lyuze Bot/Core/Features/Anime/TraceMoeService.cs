@@ -1,15 +1,14 @@
-﻿using Discord;
+using Discord;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Models.API;
-using Lyuze.Core.Shared.Embeds;
 using Lyuze.Core.Shared.Images;
 
 namespace Lyuze.Core.Features.Anime {
-    public class TraceMoeService(ILoggingService logger, IApiClient apiClient, EmbedService embedService, ColorUtils colorUtils) {
+    public class TraceMoeService(ILoggingService logger, IApiClient apiClient, IEmbedService embedService, ColorUtils colorUtils) {
         private readonly ILoggingService _logger = logger;
         private readonly IApiClient _api = apiClient;
-        private readonly EmbedService _embedService = embedService;
+        private readonly IEmbedService _embedService = embedService;
         private readonly ColorUtils _colorUtils = colorUtils;
 
 

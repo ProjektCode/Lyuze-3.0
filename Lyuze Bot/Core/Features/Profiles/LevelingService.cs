@@ -1,4 +1,5 @@
-﻿using Discord;
+using System.Collections.Concurrent;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
@@ -10,9 +11,12 @@ namespace Lyuze.Core.Features.Profiles {
         private readonly IPlayerService _player = player;
         private readonly ColorUtils _colorUtils = colorUtils;
 
-        // Instance-level state instead of static
-        private readonly List<Message> _msgList = [];
-        private readonly List<ulong> _authorList = [];
+        // Thread-safe dictionary for tracking message cooldowns
+        // Key = User ID, Value = Timestamp of their last XP-awarding message
+        private readonly ConcurrentDictionary<ulong, DateTimeOffset> _messageCooldowns = new();
+        
+        private const int CooldownSeconds = 3;
+        private const int CleanupThresholdSeconds = 30;
 
         public static double LevelEquation(int lvl) {
             double xp = Math.Floor(Math.Round(25 * Math.Pow(lvl + 1, 2)));
@@ -62,30 +66,36 @@ namespace Lyuze.Core.Features.Profiles {
         }
 
         public async Task MsgCoolDownAsync(IUserMessage message, SocketCommandContext ctx, int xp = 1) {
-            Message newMsg = new() {
-                AuthorID = message.Author.Id,
-                Timestamp = message.Timestamp,
-            };
+            var userId = message.Author.Id;
+            var now = DateTimeOffset.Now;
 
-            // If we’ve seen this author recently
-            if (_authorList.Contains(newMsg.AuthorID)) {
-                // Find their previous message
-                var authorMsg = _msgList.Find(x => x.AuthorID == newMsg.AuthorID);
+            // Lazy cleanup - remove stale entries older than threshold
+            CleanupStaleCooldowns(now);
 
-                // If at least 3 seconds have passed → award XP again
-                if (authorMsg?.Timestamp.AddSeconds(3) <= DateTimeOffset.Now) {
-                    _authorList.Remove(message.Author.Id);
-                    if (authorMsg != null) {
-                        _msgList.Remove(authorMsg);
-                    }
-
+            // Check if user is in cooldown
+            if (_messageCooldowns.TryGetValue(userId, out var lastMessageTime)) {
+                if (lastMessageTime.AddSeconds(CooldownSeconds) <= now) {
+                    // Cooldown expired - update timestamp and give XP
+                    _messageCooldowns[userId] = now;
                     await LevelHelperAsync((SocketGuildUser)message.Author, xp, ctx);
                 }
+                // else: still in cooldown, no XP awarded
             } else {
-                // First message from this author (for our purposes)
-                _authorList.Add(message.Author.Id);
-                _msgList.Add(newMsg);
+                // First message from this user - add to tracking and give XP
+                _messageCooldowns[userId] = now;
                 await LevelHelperAsync((SocketGuildUser)message.Author, xp, ctx);
+            }
+        }
+
+        /// <summary>
+        /// Removes stale cooldown entries to prevent unbounded memory growth.
+        /// </summary>
+        private void CleanupStaleCooldowns(DateTimeOffset now) {
+            var cutoff = now.AddSeconds(-CleanupThresholdSeconds);
+            foreach (var kvp in _messageCooldowns) {
+                if (kvp.Value < cutoff) {
+                    _messageCooldowns.TryRemove(kvp.Key, out _);
+                }
             }
         }
 
@@ -95,10 +105,5 @@ namespace Lyuze.Core.Features.Profiles {
                 await LevelUpAsync(user, ctx);
             }
         }
-    }
-
-    public class Message {
-        public ulong AuthorID { get; set; }
-        public DateTimeOffset Timestamp { get; set; }
     }
 }

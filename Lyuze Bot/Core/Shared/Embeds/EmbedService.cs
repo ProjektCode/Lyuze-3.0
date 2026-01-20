@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.WebSocket;
 using Discord.Interactions;
 using Lyuze.Core.Shared.Images;
@@ -6,7 +6,7 @@ using Lyuze.Core.Features.Profiles;
 using Lyuze.Core.Abstractions.Interfaces;
 
 namespace Lyuze.Core.Shared.Embeds {
-    public class EmbedService(IEmbedColorProvider embedColorService, IPlayerService playerService, ILoggingService loggingService, ColorUtils colorUtils) {
+    public class EmbedService(IEmbedColorProvider embedColorService, IPlayerService playerService, ILoggingService loggingService, ColorUtils colorUtils) : IEmbedService {
         private readonly IPlayerService _playerService = playerService;
         private readonly IEmbedColorProvider _embedColorService = embedColorService;
         private readonly ILoggingService _loggingService = loggingService;

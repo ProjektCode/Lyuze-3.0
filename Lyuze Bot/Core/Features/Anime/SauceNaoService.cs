@@ -1,14 +1,13 @@
-﻿using Discord;
+using Discord;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Models.API;
-using Lyuze.Core.Shared.Embeds;
 
 namespace Lyuze.Core.Features.Anime {
-    public class SauceNaoService(ILoggingService logger, IApiClient apiClient, EmbedService embedService, SettingsConfig settingsConfig) {
+    public class SauceNaoService(ILoggingService logger, IApiClient apiClient, IEmbedService embedService, SettingsConfig settingsConfig) {
         private readonly ILoggingService _logger = logger;
         private readonly IApiClient _api = apiClient;
-        private readonly EmbedService _embedService = embedService;
+        private readonly IEmbedService _embedService = embedService;
         private readonly SettingsConfig _settings = settingsConfig;
 
         public sealed record EmbedWithFile(Embed Embed, byte[]? FileBytes, string? FileName);

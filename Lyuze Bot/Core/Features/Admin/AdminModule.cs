@@ -1,17 +1,26 @@
-﻿using Discord;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Extensions;
 using Lyuze.Core.Shared.Images;
 using Lyuze.Core.Shared.Images.Primitives;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace Lyuze.Core.Features.Admin {
-    public class AdminModule(IPlayerService playerService, ImageFetcher imageFetcher, ColorUtils colorUtils) : InteractionModuleBase<SocketInteractionContext> {
+    public class AdminModule(
+        IPlayerService playerService,
+        ImageFetcher imageFetcher,
+        ColorUtils colorUtils,
+        AdminService adminService,
+        ILogger<AdminModule> logger) : InteractionModuleBase<SocketInteractionContext> {
+        
         private readonly IPlayerService _playerService = playerService;
         private readonly ImageFetcher _imageFetcher = imageFetcher;
         private readonly ColorUtils _colorUtils = colorUtils;
+        private readonly AdminService _adminService = adminService;
+        private readonly ILogger<AdminModule> _logger = logger;
 
         [SlashCommand("purge", "Purge messages from the last 14 days")]
         [RequireBotPermission(GuildPermission.ManageMessages)]
@@ -19,75 +28,22 @@ namespace Lyuze.Core.Features.Admin {
         public async Task PurgeCmd(int amount = 200) {
             await DeferAsync(ephemeral: true);
 
-            if (amount <= 0) {
-                await FollowupAsync("Amount must be greater than 0.", ephemeral: true);
-                await Context.DelayDeleteOriginalAsync();
-                return;
-            }
-
-            if (amount > 1000) {
-                await FollowupAsync("Amount must be 1000 or less.", ephemeral: true);
-                await Context.DelayDeleteOriginalAsync();
-                return;
-            }
-
             try {
                 var channel = (ITextChannel)Context.Channel;
-                var cutoff = DateTimeOffset.UtcNow.AddDays(-14);
+                var result = await _adminService.GetMessagesToDeleteAsync(channel, amount);
 
-                var toDelete = new List<IMessage>(capacity: Math.Min(amount, 1000));
-                ulong? beforeId = null;
-
-                while (toDelete.Count < amount) {
-                    var remaining = amount - toDelete.Count;
-                    var pageSize = Math.Min(100, remaining);
-
-                    IEnumerable<IMessage> page;
-
-                    if (beforeId.HasValue) {
-                        page = await Context.Channel
-                            .GetMessagesAsync(beforeId.Value, Direction.Before, pageSize)
-                            .FlattenAsync();
-                    } else {
-                        page = await Context.Channel
-                            .GetMessagesAsync(pageSize)
-                            .FlattenAsync();
-                    }
-
-                    var pageList = page.ToList();
-                    if (pageList.Count == 0)
-                        break;
-
-                    foreach (var msg in pageList) {
-                        if (msg.Timestamp < cutoff) {
-                            beforeId = null;
-                            break;
-                        }
-
-                        if (msg is IUserMessage userMsg) {
-                            toDelete.Add(userMsg);
-                        }
-                    }
-
-                    beforeId = pageList.Last().Id;
-
-                    if (pageList.Last().Timestamp < cutoff)
-                        break;
-                }
-
-                if (toDelete.Count == 0) {
-                    await FollowupAsync("Nothing to delete (within 14 days).", ephemeral: true);
+                if (!result.IsSuccess) {
+                    await FollowupAsync(result.ErrorMessage!, ephemeral: true);
                     await Context.DelayDeleteOriginalAsync();
                     return;
                 }
 
-                // Bulk delete expects a collection
-                await channel.DeleteMessagesAsync(toDelete);
+                var deletedCount = await _adminService.DeleteMessagesAsync(channel, result.Messages!);
 
-                await FollowupAsync($"Deleted {toDelete.Count} message(s) from the last 14 days.", ephemeral: true);
+                await FollowupAsync($"Deleted {deletedCount} message(s) from the last 14 days.", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
             } catch (Exception ex) {
-                Console.WriteLine(ex);
+                _logger.LogError(ex, "Error purging messages");
                 await FollowupAsync("An error occurred trying to purge messages.", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
             }
@@ -104,7 +60,7 @@ namespace Lyuze.Core.Features.Admin {
                 await Context.DelayDeleteOriginalAsync();
 
             } catch (Exception ex) {
-                Console.WriteLine(ex.ToString());
+                _logger.LogError(ex, "Error kicking user {Username}", user.Username);
                 await RespondAsync("An error has occured trying to kick user", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
             }
@@ -113,14 +69,14 @@ namespace Lyuze.Core.Features.Admin {
         [SlashCommand("ban", "Ban user from the server")]
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
-        public async Task BanCmd(SocketGuildUser user,int pruneDays ,string reason = "No reason given.") {
+        public async Task BanCmd(SocketGuildUser user, int pruneDays, string reason = "No reason given.") {
             try {
-                await Context.Guild.AddBanAsync(user,pruneDays, reason);
+                await Context.Guild.AddBanAsync(user, pruneDays, reason);
                 await RespondAsync($"User {user.Username} has been banned for: {reason} - by {Context.User.Username}.");
                 await Context.DelayDeleteOriginalAsync();
 
             } catch (Exception ex) {
-                Console.WriteLine(ex.ToString());
+                _logger.LogError(ex, "Error banning user {Username}", user.Username);
                 await RespondAsync("An error has occured trying to ban user", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
             }
@@ -140,7 +96,7 @@ namespace Lyuze.Core.Features.Admin {
                     p.Kill();
                 }
             } catch (Exception ex) {
-                Console.WriteLine(ex.Message);
+                _logger.LogError(ex, "Error killing bot process");
                 await FollowupAsync("An error has occurred while trying to kill the bot.");
                 await Context.DelayDeleteOriginalAsync();
             }
@@ -178,7 +134,7 @@ namespace Lyuze.Core.Features.Admin {
             // Send image as attachment
             await using var ms = new MemoryStream(imageBytes);
             await FollowupWithFileAsync(
-                text: "✅ Image generated successfully!",
+                text: "Image generated successfully!",
                 attachment: new FileAttachment(ms, "welcome-test.png")
             );
 

@@ -1,4 +1,4 @@
-﻿using Lyuze.Core.Abstractions.Interfaces;
+using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Infrastructure.Configuration;
 using System.Text;
 using System.Text.Json;
@@ -30,7 +30,7 @@ namespace Lyuze.Core.Features.Integrations.N8n {
                 };
 
                 var json = JsonSerializer.Serialize(payload);
-                Console.WriteLine(json);
+                await _logger.LogSetupAsync("n8n", $"Sending payload: {json}");
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync(webhookUri, content);

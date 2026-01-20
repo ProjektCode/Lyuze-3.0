@@ -1,24 +1,22 @@
-﻿using Lyuze.Core.Features.Profiles;
+using Lyuze.Core.Features.Profiles;
 using Lyuze.Core.Infrastructure.Configuration;
 using MongoDB.Driver;
 
 namespace Lyuze.Core.Infrastructure.Database {
     public class DatabaseContext {
-        public readonly MongoClient client;
-        public readonly IMongoDatabase database;
-        public readonly IMongoCollection<PlayerModel> playerCollection;
+        private readonly MongoClient _client;
+        private readonly IMongoDatabase _database;
+        private readonly SettingsConfig _settings;
 
-        private readonly SettingsConfig settings;
+        public IMongoCollection<PlayerModel> Players { get; }
 
         public DatabaseContext(SettingsConfig settingsHandler) {
-            settings = settingsHandler ?? throw new ArgumentNullException(nameof(settingsHandler));
+            _settings = settingsHandler ?? throw new ArgumentNullException(nameof(settingsHandler));
 
-            var db = settings.Database ?? throw new InvalidOperationException("Database config missing.");
-            client = new MongoClient(db.MongoDb);
-            database = client.GetDatabase(db.DatabaseName);
-            playerCollection = database.GetCollection<PlayerModel>(db.PlayerCollection);
-
+            var db = _settings.Database ?? throw new InvalidOperationException("Database config missing.");
+            _client = new MongoClient(db.MongoDb);
+            _database = _client.GetDatabase(db.DatabaseName);
+            Players = _database.GetCollection<PlayerModel>(db.PlayerCollection);
         }
-
     }
 }

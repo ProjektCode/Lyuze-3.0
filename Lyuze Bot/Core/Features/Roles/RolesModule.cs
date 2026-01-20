@@ -1,18 +1,17 @@
-﻿using Discord;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Extensions;
 using Lyuze.Core.Infrastructure.Configuration;
-using Lyuze.Core.Utilities;
-using System.Data;
 
 namespace Lyuze.Core.Features.Roles {
-    public class RolesModule(ReactionRolesService reactionRoleHandler, SettingsConfig settingsConfig, ISettingsService settingsService) : InteractionModuleBase<SocketInteractionContext> {
+    public class RolesModule(ReactionRolesService reactionRoleHandler, SettingsConfig settingsConfig, ISettingsService settingsService, ILoggingService logger) : InteractionModuleBase<SocketInteractionContext> {
 
         private readonly ReactionRolesService _reactionRoleHandler = reactionRoleHandler;
         private readonly SettingsConfig _settings = settingsConfig;
         private readonly ISettingsService _settingsService = settingsService;
+        private readonly ILoggingService _logger = logger;
 
         [SlashCommand("remove_role", "Remove a specified role from a user")]
         public async Task RemoveRole(IUser user) {
@@ -101,7 +100,7 @@ namespace Lyuze.Core.Features.Roles {
                             emotes.Add(new Emoji(entry.Emoji));
                         }
                     } catch (Exception ex) {
-                        Console.WriteLine($"Failed to parse emoji '{entry.Emoji}': {ex.Message}");
+                        await _logger.LogWarningAsync("roles", $"Failed to parse emoji '{entry.Emoji}': {ex.Message}");
                     }
                 }
 
@@ -124,7 +123,7 @@ namespace Lyuze.Core.Features.Roles {
                 await FollowupAsync("Reaction Roles have been set up.", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
             } catch (Exception ex) {
-                Console.WriteLine(ex.ToString());
+                await _logger.LogErrorAsync("roles", "Error setting up reaction roles", ex);
                 await FollowupAsync("An error occurred. Command failed.");
                 await Context.DelayDeleteOriginalAsync();
             }
@@ -198,7 +197,8 @@ namespace Lyuze.Core.Features.Roles {
 
             try {
                 if (_settings.IDs?.ReactionRoleMessageId == null) {
-                    Console.WriteLine("[ReactionRoleHandler] Reaction roles message not found.");
+                    await _logger.LogWarningAsync("roles", "Reaction roles message not found.");
+                    await FollowupAsync("Reaction roles message not configured.", ephemeral: true);
                     return;
                 }
 
@@ -229,7 +229,7 @@ namespace Lyuze.Core.Features.Roles {
                 await Context.DelayDeleteOriginalAsync();
 
             } catch (Exception ex) {
-                Console.WriteLine(ex.ToString());
+                await _logger.LogErrorAsync("roles", "Error adding bot reaction", ex);
                 await FollowupAsync($"An error has occurred: {ex.Message}");
                 await Context.DelayDeleteOriginalAsync();
             }
