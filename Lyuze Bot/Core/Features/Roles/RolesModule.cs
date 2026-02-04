@@ -84,29 +84,16 @@ namespace Lyuze.Core.Features.Roles {
             try {
                 await DeferAsync();
 
-                var guild = Context.Guild;
-
                 var lines = new List<string>();
                 var emotes = new List<IEmote>();
 
-                foreach (var entry in _settings.ReactionRoles) {
-                    string roleName = guild.GetRole(entry.RoleId)?.Name ?? "(unknown role)";
-                    lines.Add($"{entry.Emoji} - {roleName}");
-
-                    try {
-                        if (entry.Emoji.StartsWith("<:")) {
-                            emotes.Add(Emote.Parse(entry.Emoji));
-                        } else {
-                            emotes.Add(new Emoji(entry.Emoji));
-                        }
-                    } catch (Exception ex) {
-                        await _logger.LogWarningAsync("roles", $"Failed to parse emoji '{entry.Emoji}': {ex.Message}");
-                    }
-                }
+                // In a new setup, we start fresh, so no existing roles to list
+                // If you wanted to load existing roles from DB, you'd need to fetch them here via Service.
+                // But typically setup creates a NEW message.
 
                 var embed = new EmbedBuilder()
                     .WithTitle("ROLES")
-                    .WithDescription(string.Join("\n", lines))
+                    .WithDescription("React to get roles!") // Start empty or default
                     .WithColor(Color.DarkRed)
                     .WithImageUrl("https://i.imgur.com/w364R6i.png")
                     .Build();
@@ -114,13 +101,12 @@ namespace Lyuze.Core.Features.Roles {
                 var message = await Context.Channel.SendMessageAsync(embed: embed);
 
                 _settings.IDs ??= new IDs();
-
                 _settings.IDs.ReactionRoleMessageId = message.Id;
                 await _settingsService.SaveAsync();
 
-                await message.AddReactionsAsync([.. emotes]);
+                // Note: Emotes are added via add_reaction_roles now
 
-                await FollowupAsync("Reaction Roles have been set up.", ephemeral: true);
+                await FollowupAsync("Reaction Roles message created! Use /add_reaction_roles to add roles to it.", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
             } catch (Exception ex) {
                 await _logger.LogErrorAsync("roles", "Error setting up reaction roles", ex);
@@ -138,17 +124,17 @@ namespace Lyuze.Core.Features.Roles {
             var channel = Context.Channel; 
 
             if (_settings.IDs?.ReactionRoleMessageId == null) {
-                await FollowupAsync("Reaction roles message not found.", ephemeral: true);
+                await FollowupAsync("Reaction roles message not found. Run /setup_reaction_roles first.", ephemeral: true);
                 return;
             }
 
             var messageId = _settings.IDs.ReactionRoleMessageId;
-            IUserMessage message = (IUserMessage)await channel.GetMessageAsync(messageId);
-
-            //if (await channel.GetMessageAsync(messageId) is not IUserMessage message) {
-            //    await FollowupAsync("Reaction roles message not found.", ephemeral: true);
-            //    return;
-            //}
+            var messageObj = await channel.GetMessageAsync(messageId);
+            
+            if (messageObj is not IUserMessage message) {
+                 await FollowupAsync("Reaction roles message not found (it may have been deleted).", ephemeral: true);
+                 return;
+            }
 
             var embed = message.Embeds.FirstOrDefault();
             if (embed == null) {
@@ -156,7 +142,7 @@ namespace Lyuze.Core.Features.Roles {
                 return;
             }
 
-            var newDescription = embed.Description + $"\n{selectedEmoji} - {role.Name}";
+            var newDescription = (embed.Description ?? "") + $"\n{selectedEmoji} - {role.Name}";
 
             var newEmbed = new EmbedBuilder()
                 .WithTitle(embed.Title)
@@ -177,11 +163,8 @@ namespace Lyuze.Core.Features.Roles {
 
             await message.AddReactionAsync(emote);
 
-            // Register the new reaction role in handler and save to JSON
-            await _reactionRoleHandler.AddReactionRoleAsync(selectedEmoji, role.Id);
-
-            _settings.ReactionRoles.Add(new ReactionRoleEntry { Emoji = selectedEmoji, RoleId = role.Id });
-            await _settingsService.SaveAsync();
+            // Register the new reaction role via Service (handles DB + Cache)
+            await _reactionRoleHandler.AddReactionRoleAsync(selectedEmoji, role.Id, messageId);
 
             await FollowupAsync("Reaction role has been added and embed updated.", ephemeral: true);
         }
@@ -214,16 +197,8 @@ namespace Lyuze.Core.Features.Roles {
                 var emote = new Emoji(selectedEmoji);
                 await message.AddReactionAsync(emote);
 
-                // Register the new reaction role
-                await _reactionRoleHandler.AddReactionRoleAsync(selectedEmoji, role.Id);
-
-                // Save to settings
-                _settings.ReactionRoles.Add(new ReactionRoleEntry {
-                    Emoji = selectedEmoji,
-                    RoleId = role.Id
-                });
-
-                await _settingsService.SaveAsync();
+                // Register the new reaction role via Service (handles DB + Cache)
+                await _reactionRoleHandler.AddReactionRoleAsync(selectedEmoji, role.Id, messageId);
 
                 await FollowupAsync("Reaction has been added and saved.", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
@@ -234,7 +209,5 @@ namespace Lyuze.Core.Features.Roles {
                 await Context.DelayDeleteOriginalAsync();
             }
         }
-
-
     }
 }

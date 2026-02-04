@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace Lyuze.Core.Infrastructure.Configuration {
     public class SettingsConfig {
@@ -30,9 +30,6 @@ namespace Lyuze.Core.Infrastructure.Configuration {
         [JsonProperty(nameof(Status))]
         public List<string> Status { get; set; } = [];
 
-        [JsonProperty(nameof(ReactionRoles))]
-        public List<ReactionRoleEntry> ReactionRoles { get; set; } = [];
-
         [JsonProperty(nameof(Database))]
         public Database Database { get; set; } = new() {
             MongoDb = "Default Mongodb",
@@ -58,6 +55,13 @@ namespace Lyuze.Core.Infrastructure.Configuration {
 
         [JsonProperty("Sauce Nao")]
         public string? SauceNao { get; set; }
+
+        // Optional (higher rate limits): https://danbooru.donmai.us
+        [JsonProperty("Danbooru Login")]
+        public string? DanbooruLogin { get; set; }
+
+        [JsonProperty("Danbooru Api Key")]
+        public string? DanbooruApiKey { get; set; }
     }
 
     public class DiscordStuff {
@@ -98,14 +102,6 @@ namespace Lyuze.Core.Infrastructure.Configuration {
 
         [JsonProperty("Reaction Roles Message ID")]
         public ulong ReactionRoleMessageId { get; set; }
-    }
-
-    public class ReactionRoleEntry {
-        [JsonProperty(nameof(Emoji))]
-        public string Emoji { get; set; } = null!;
-
-        [JsonProperty(nameof(RoleId))]
-        public ulong RoleId { get; set; }
     }
 
     public class Database {

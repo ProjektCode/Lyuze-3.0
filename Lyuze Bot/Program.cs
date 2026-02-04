@@ -68,6 +68,7 @@ public class Program {
                 services.AddSingleton<AnimeQuoteService>();
                 services.AddSingleton<TraceMoeService>();
                 services.AddSingleton<IEmbedService, EmbedService>();
+                services.AddSingleton<DanbooruIqdbService>();
                 services.AddSingleton<SauceNaoService>();
                 services.AddSingleton<ProfileService>();
                 services.AddSingleton<ImageFetcher>();
@@ -78,7 +79,11 @@ public class Program {
                 services.AddSingleton<IEmbedColorProvider, EmbedColorProvider>();
 
                 // Http client services
-                services.AddHttpClient<IApiClient, ApiClient>();
+                services.AddHttpClient<IApiClient, ApiClient>(client => {
+                    // Some APIs (incl. Danbooru) may reject requests without a User-Agent.
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LyuzeBot/3.0");
+                    client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
+                });
 
                 // Hosted service for Discord bot lifecycle
                 services.AddHostedService<DiscordStartupService>();
