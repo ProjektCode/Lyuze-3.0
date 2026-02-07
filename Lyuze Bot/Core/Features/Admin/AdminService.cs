@@ -73,6 +73,14 @@ public sealed class AdminService {
         return PurgeResult.Success(toDelete);
     }
 
+    public static async Task<KickResult> KickUserAsync(IGuild guild, SocketGuildUser user, string? reason) {
+        if (user is null) {
+            return KickResult.Failure("User not found in the guild.");
+        }
+        await user.KickAsync(reason ?? "No reason given", new RequestOptions { AuditLogReason = reason ?? "No reason given." });
+        return KickResult.Success(user.Username, reason ?? "No reason given.");
+    }
+
     public static async Task<BanResult> BanUserAsync(IGuild guild, SocketGuildUser user, int pruneDays, string? reason) {
 
         
@@ -117,9 +125,6 @@ public sealed class AdminService {
     }
 }
 
-/// <summary>
-/// Represents the result of a purge operation.
-/// </summary>
 public readonly record struct PurgeResult {
     public bool IsSuccess { get; init; }
     public string? ErrorMessage { get; init; }
@@ -132,9 +137,17 @@ public readonly record struct PurgeResult {
         new() { IsSuccess = false, ErrorMessage = errorMessage };
 }
 
-/// <summary>
-/// Represents the result of a ban operation.
-/// </summary>
+public readonly record struct KickResult {
+    public bool IsSuccess { get; init; }
+    public string? ErrorMessage { get; init; }
+    public string? Username { get; init; }
+    public string? Reason { get; init; }
+    public static KickResult Success(string name, string reason) =>
+        new() { IsSuccess = true, Username = name, Reason = reason };
+    public static KickResult Failure(string errorMessage) =>
+        new() { IsSuccess = false, ErrorMessage = errorMessage };
+}
+
 public readonly record struct BanResult {
     public bool IsSuccess { get; init; }
     public string? ErrorMessage { get; init; }
@@ -147,9 +160,6 @@ public readonly record struct BanResult {
 }
 
 
-/// <summary>
-/// Represents the result of an unban operation.
-/// </summary>
 public readonly record struct UnBanResult {
     public bool IsSuccess { get; init; }
     public string? ErrorMessage { get; init; }

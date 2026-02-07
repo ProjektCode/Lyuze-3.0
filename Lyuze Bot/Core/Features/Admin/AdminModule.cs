@@ -11,17 +11,12 @@ using System.Diagnostics;
 namespace Lyuze.Core.Features.Admin {
     public class AdminModule(
         IPlayerService playerService,
-        ImageFetcher imageFetcher,
-        ColorUtils colorUtils,
-        AdminService adminService,
-        ILogger<AdminModule> logger,
-        IEmbedService embedService) : InteractionModuleBase<SocketInteractionContext> {
+        ImageFetcher imageFetcher, ColorUtils colorUtils, ILoggingService logger, IEmbedService embedService) : InteractionModuleBase<SocketInteractionContext> {
         
         private readonly IPlayerService _playerService = playerService;
         private readonly ImageFetcher _imageFetcher = imageFetcher;
         private readonly ColorUtils _colorUtils = colorUtils;
-        private readonly AdminService _adminService = adminService;
-        private readonly ILogger<AdminModule> _logger = logger;
+        private readonly ILoggingService _logger = logger;
         private readonly IEmbedService _embedService = embedService;
 
         [SlashCommand("purge", "Purge messages from the last 14 days")]
@@ -30,25 +25,25 @@ namespace Lyuze.Core.Features.Admin {
         public async Task PurgeCmd(int amount = 200) {
             await DeferAsync(ephemeral: true);
 
-            try {
-                var channel = (ITextChannel)Context.Channel;
-                var result = await AdminService.GetMessagesToDeleteAsync(channel, amount);
-
-                if (!result.IsSuccess) {
-                    await FollowupAsync(result.ErrorMessage!, ephemeral: true);
-                    await Context.DelayDeleteOriginalAsync();
-                    return;
-                }
-
-                var deletedCount = await AdminService.DeleteMessagesAsync(channel, result.Messages!);
-
-                await FollowupAsync($"Deleted {deletedCount} message(s) from the last 14 days.", ephemeral: true);
+            if (Context.Channel is not ITextChannel channel) {
+                await FollowupAsync("This command can only be used in text channels.", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
-            } catch (Exception ex) {
-                _logger.LogError(ex, "Error purging messages");
-                await FollowupAsync("An error occurred trying to purge messages.", ephemeral: true);
-                await Context.DelayDeleteOriginalAsync();
+                return;
             }
+
+            var result = await AdminService.GetMessagesToDeleteAsync(channel, amount);
+
+            if(!result.IsSuccess) {
+                await FollowupAsync(result.ErrorMessage!, ephemeral: true);
+                await _logger.LogErrorAsync("admin", "Error fetching messages to purge: {ErrorMessage}", new Exception(result.ErrorMessage));
+                await Context.DelayDeleteOriginalAsync();
+                return;
+            }
+
+            var deletedCount = await AdminService.DeleteMessagesAsync(channel, result.Messages!);
+            await FollowupAsync($"Deleted {deletedCount} message(s) from the last 14 days.", ephemeral: true);
+            await Context.DelayDeleteOriginalAsync(10);
+
         }
 
 
@@ -56,16 +51,21 @@ namespace Lyuze.Core.Features.Admin {
         [RequireBotPermission(GuildPermission.KickMembers)]
         [RequireUserPermission(GuildPermission.KickMembers)]
         public async Task KickCmd(SocketGuildUser user, string reason = "No reason given.") {
-            try {
-                await user.KickAsync(reason);
-                await RespondAsync($"User {user.Username} has been kicked for: {reason} - by {Context.User.Username}.");
-                await Context.DelayDeleteOriginalAsync();
+            await DeferAsync(ephemeral: true);
 
-            } catch (Exception ex) {
-                _logger.LogError(ex, "Error kicking user {Username}", user.Username);
-                await RespondAsync("An error has occured trying to kick user", ephemeral: true);
+            var result = await AdminService.KickUserAsync(Context.Guild, user, reason);
+            
+            if (!result.IsSuccess) {
+                await FollowupAsync(embed: await _embedService.ErrorEmbedAsync("Admin", error: result.ErrorMessage ?? "Unknown Error Occurred."), ephemeral: true);
+                
+                await _logger.LogErrorAsync("admin", "Error kicking user {Username}: {ErrorMessage}", new Exception(result.ErrorMessage));
                 await Context.DelayDeleteOriginalAsync();
+                return;
             }
+
+            await FollowupAsync($"Successfully kicked **{result.Username}** for reason: {result.Reason} - by {Context.User.Username}.", ephemeral: true);
+            await Context.DelayDeleteOriginalAsync(10);
+
         }
 
         [SlashCommand("ban", "Ban user from the server")]
@@ -78,15 +78,13 @@ namespace Lyuze.Core.Features.Admin {
 
             if (!result.IsSuccess) {
                 await FollowupAsync(embed: await _embedService.ErrorEmbedAsync("Admin", error: result.ErrorMessage ?? "Unknown Error Occurred."), ephemeral: true);
-                _logger.LogError("Error banning user {Username}: {ErrorMessage}", user.Username, result.ErrorMessage);
+                
+                await _logger.LogErrorAsync("admin", "Error banning user {Username}: {ErrorMessage}", new Exception(result.ErrorMessage));
                 await Context.DelayDeleteOriginalAsync();
                 return;
             }
 
-            await FollowupAsync(
-                $"Successfully banned **{result.Username}** for reason: {result.Reason} - by {Context.User.Username}.",
-                ephemeral: true
-            );
+            await FollowupAsync($"Successfully banned **{result.Username}** for reason: {result.Reason} - by {Context.User.Username}.", ephemeral: true);
             await Context.DelayDeleteOriginalAsync(10);
         }
 
@@ -178,7 +176,7 @@ namespace Lyuze.Core.Features.Admin {
                     p.Kill();
                 }
             } catch (Exception ex) {
-                _logger.LogError(ex, "Error killing bot process");
+                await _logger.LogErrorAsync("admin", "Error trying to kill the bot", ex);
                 await FollowupAsync("An error has occurred while trying to kill the bot.");
                 await Context.DelayDeleteOriginalAsync();
             }
