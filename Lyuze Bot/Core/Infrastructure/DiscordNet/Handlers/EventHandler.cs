@@ -121,18 +121,33 @@ namespace Lyuze.Core.Infrastructure.DiscordNet.Handlers {
                 msg.Exception);
         }
 
-        private async Task OnReadyAsync() {
-            try {
-                await RegisterCommandsAsync();
-                await SetOnlineAsync();
+        private bool _readyFired;
 
-                StartStatusRotation(); // fire-and-forget background loop (tracked)
-                await _reactionRolesService.InitializeAsync();
-
-                await _logger.LogInformationAsync("discord", "Bot is ready and commands are registered.");
-            } catch (Exception ex) {
-                await _logger.LogCriticalAsync("discord", $"OnReady: {ex.Message}", ex);
+        private Task OnReadyAsync() {
+            // Avoid blocking the gateway thread and ensure we run once per ready cycle.
+            if (_readyFired) {
+                return Task.CompletedTask;
             }
+
+            _readyFired = true;
+
+            _ = Task.Run(async () => {
+                try {
+                    await RegisterCommandsAsync();
+                    await SetOnlineAsync();
+
+                    StartStatusRotation(); // fire-and-forget background loop (tracked)
+                    await _reactionRolesService.InitializeAsync();
+
+                    await _logger.LogInformationAsync("discord", "Bot is ready and commands are registered.");
+                } catch (Exception ex) {
+                    await _logger.LogCriticalAsync("discord", $"OnReady: {ex.Message}", ex);
+                } finally {
+                    _readyFired = false; // allow rerun on reconnect
+                }
+            });
+
+            return Task.CompletedTask;
         }
 
 

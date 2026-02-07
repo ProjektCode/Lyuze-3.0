@@ -14,13 +14,15 @@ namespace Lyuze.Core.Features.Admin {
         ImageFetcher imageFetcher,
         ColorUtils colorUtils,
         AdminService adminService,
-        ILogger<AdminModule> logger) : InteractionModuleBase<SocketInteractionContext> {
+        ILogger<AdminModule> logger,
+        IEmbedService embedService) : InteractionModuleBase<SocketInteractionContext> {
         
         private readonly IPlayerService _playerService = playerService;
         private readonly ImageFetcher _imageFetcher = imageFetcher;
         private readonly ColorUtils _colorUtils = colorUtils;
         private readonly AdminService _adminService = adminService;
         private readonly ILogger<AdminModule> _logger = logger;
+        private readonly IEmbedService _embedService = embedService;
 
         [SlashCommand("purge", "Purge messages from the last 14 days")]
         [RequireBotPermission(GuildPermission.ManageMessages)]
@@ -30,7 +32,7 @@ namespace Lyuze.Core.Features.Admin {
 
             try {
                 var channel = (ITextChannel)Context.Channel;
-                var result = await _adminService.GetMessagesToDeleteAsync(channel, amount);
+                var result = await AdminService.GetMessagesToDeleteAsync(channel, amount);
 
                 if (!result.IsSuccess) {
                     await FollowupAsync(result.ErrorMessage!, ephemeral: true);
@@ -38,7 +40,7 @@ namespace Lyuze.Core.Features.Admin {
                     return;
                 }
 
-                var deletedCount = await _adminService.DeleteMessagesAsync(channel, result.Messages!);
+                var deletedCount = await AdminService.DeleteMessagesAsync(channel, result.Messages!);
 
                 await FollowupAsync($"Deleted {deletedCount} message(s) from the last 14 days.", ephemeral: true);
                 await Context.DelayDeleteOriginalAsync();
@@ -70,16 +72,96 @@ namespace Lyuze.Core.Features.Admin {
         [RequireBotPermission(GuildPermission.BanMembers)]
         [RequireUserPermission(GuildPermission.BanMembers)]
         public async Task BanCmd(SocketGuildUser user, int pruneDays, string reason = "No reason given.") {
-            try {
-                await Context.Guild.AddBanAsync(user, pruneDays, reason);
-                await RespondAsync($"User {user.Username} has been banned for: {reason} - by {Context.User.Username}.");
-                await Context.DelayDeleteOriginalAsync();
+            await DeferAsync(ephemeral: true);
 
-            } catch (Exception ex) {
-                _logger.LogError(ex, "Error banning user {Username}", user.Username);
-                await RespondAsync("An error has occured trying to ban user", ephemeral: true);
+            var result = await AdminService.BanUserAsync(Context.Guild, user, pruneDays, reason);
+
+            if (!result.IsSuccess) {
+                await FollowupAsync(embed: await _embedService.ErrorEmbedAsync("Admin", error: result.ErrorMessage ?? "Unknown Error Occurred."), ephemeral: true);
+                _logger.LogError("Error banning user {Username}: {ErrorMessage}", user.Username, result.ErrorMessage);
                 await Context.DelayDeleteOriginalAsync();
+                return;
             }
+
+            await FollowupAsync(
+                $"Successfully banned **{result.Username}** for reason: {result.Reason} - by {Context.User.Username}.",
+                ephemeral: true
+            );
+            await Context.DelayDeleteOriginalAsync(10);
+        }
+
+        [SlashCommand("unban", "Unban a user from the server")]
+        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        public async Task UnbanCmd() {
+            await DeferAsync(ephemeral: true);
+
+            // 1. Fetch banned users (max 25 for SelectMenu)
+            var bans = await AdminService.GetBannedUsersAsync(Context.Guild, limit: 25);
+
+            // 2. Handle empty ban list
+            if (bans.Count == 0) {
+                await FollowupAsync("No banned users found.", ephemeral: true);
+                return;
+            }
+
+            // 3. Build SelectMenu options
+            var options = bans.Select(ban => new SelectMenuOptionBuilder()
+                .WithLabel(Truncate($"{ban.User.Username} ({ban.User.Id})", 100))
+                .WithValue(ban.User.Id.ToString())
+                .WithDescription(Truncate($"Reason: {ban.Reason ?? "No reason provided"}", 100))
+            ).ToList();
+
+            // 4. Build the SelectMenu component
+            // Embed moderator ID in customId for security verification
+            var menu = new SelectMenuBuilder()
+                .WithCustomId($"unban-select:{Context.User.Id}")
+                .WithPlaceholder("Select a user to unban")
+                .WithMinValues(1)
+                .WithMaxValues(1)
+                .WithOptions(options);
+
+            var component = new ComponentBuilder()
+                .WithSelectMenu(menu)
+                .Build();
+
+            // 5. Build the embed
+            var description = bans.Count >= 25
+                ? "Showing first 25 banned users.\nFor others, use `/unban-id <userId>`."
+                : $"Found {bans.Count} banned user(s). Select one to unban.";
+
+            var embed = new EmbedBuilder()
+                .WithTitle("Unban User")
+                .WithDescription(description)
+                .WithColor(Color.Orange)
+                .WithFooter("This dropdown expires after 15 minutes.")
+                .Build();
+
+            // 6. Send the response
+            await FollowupAsync(embed: embed, components: component, ephemeral: true);
+        }
+
+        [SlashCommand("unban-id", "Unban a user by their Discord ID (for large ban lists)")]
+        [RequireBotPermission(GuildPermission.BanMembers)]
+        [RequireUserPermission(GuildPermission.BanMembers)]
+        public async Task UnbanIdCmd(
+            [Summary("user-id", "The user's Discord ID (numeric)")] string userId,
+            [Summary("reason", "Reason for unbanning (appears in audit log)")] string? reason = null) {
+
+            await DeferAsync(ephemeral: true);
+
+            var result = await AdminService.UnbanUserAsync(Context.Guild, userId, reason);
+
+            if (!result.IsSuccess) {
+                await FollowupAsync($"Failed to unban: {result.ErrorMessage}", ephemeral: true);
+                return;
+            }
+
+            await FollowupAsync(
+                $"Successfully unbanned **{result.Username}** (ID: {userId}).",
+                ephemeral: true
+            );
+            await Context.DelayDeleteOriginalAsync(10);
         }
 
         [SlashCommand("kill", "Kill the bot")]
@@ -139,5 +221,16 @@ namespace Lyuze.Core.Features.Admin {
             );
 
         }
+
+        /// <summary>
+        /// Truncates a string to a maximum length, adding "..." if truncated.
+        /// </summary>
+        private static string Truncate(string input, int maxLength) {
+            if (string.IsNullOrEmpty(input) || input.Length <= maxLength) {
+                return input ?? string.Empty;
+            }
+            return input[..(maxLength - 3)] + "...";
+        }
+
     }
 }
