@@ -37,10 +37,6 @@ namespace Lyuze.Core.Infrastructure.Configuration {
             DatabaseName = "Default Database Name"
         };
 
-        [JsonProperty(nameof(N8n))]
-        public N8N N8n { get; set; } = new() {
-            WebhookUrl = string.Empty
-        };
     }
 
     public class ApIs {
@@ -115,9 +111,4 @@ namespace Lyuze.Core.Infrastructure.Configuration {
         public required string PlayerCollection { get; set; }
     }
 
-    public class N8N {
-        // Must match your JSON: "WebhookURL"
-        [JsonProperty("WebhookURL")]
-        public required string WebhookUrl { get; set; }
-    }
 }

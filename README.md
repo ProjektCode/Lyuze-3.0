@@ -2,6 +2,8 @@
 
 Lyuze 3.0 is a modern, modular, and extensible Discord bot built with C# and Discord.NET. It leverages .NET's Generic Host for robust application lifecycle management and Dependency Injection, making it easy to develop and maintain. The bot features a range of functionalities, including administrative tools, anime-related commands, user profiles with leveling, and reaction roles.
 
+**Lyuze 3.0 is designed for self-hosting, offering full control and customization to its deployers.**
+
 ## Features
 
 *   **Administration & Moderation:**
@@ -27,6 +29,11 @@ Lyuze 3.0 is a modern, modular, and extensible Discord bot built with C# and Dis
     *   Extensive use of Dependency Injection.
     *   MongoDB for data persistence.
     *   Asynchronous event handling.
+
+## Roadmap
+Curious about what's next for Lyuze Bot? Check out our development roadmap to see upcoming features, planned improvements, and how you can contribute to shaping the future of the bot.
+
+*   [Lyuze Bot Roadmap](docs/ROADMAP.md)
 
 ## Quick Start
 
@@ -91,7 +98,14 @@ For a complete list of commands, their descriptions, and required permissions, r
 
 If you plan to contribute to Lyuze 3.0 or develop new features, please refer to [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md) for guidelines on setting up your development environment, coding conventions, and adding new commands or services. This document is intended for contributors and maintainers, providing practical guidance for working with the codebase.
 
-## Existing Documentation
+## Documentation
+Dive deeper into Lyuze Bot's features and development:
 
-*   [`docs/MODERATION.md`](./docs/MODERATION.md)
-*   [`docs/ANIME-IMAGE-SEARCH.md`](./docs/ANIME-IMAGE-SEARCH.md)
+*   **Anime Image Search**: Explore how to use and extend the anime image search functionalities. In-depth: `docs/ANIME-IMAGE-SEARCH.md`
+*   **Architecture**: Understand the core design principles and structure of Lyuze Bot. In-depth: `docs/ARCHITECTURE.md`
+*   **Commands**: A comprehensive guide to all available commands and their usage. In-depth: `docs/COMMANDS.md`
+*   **Configuration**: Learn how to configure Lyuze Bot to your server's needs. In-depth: `docs/CONFIGURATION.md`
+*   **Development**: Get started with developing and contributing to Lyuze Bot. In-depth: `docs/DEVELOPMENT.md`
+*   **Moderation**: Details on moderation commands and how to keep your server safe. In-depth: `docs/MODERATION.md`
+*   **Setup**: Step-by-step instructions to get Lyuze Bot up and running. In-depth: `docs/SETUP.md`
+*   **Roadmap**: Discover upcoming features and planned improvements for Lyuze Bot. In-depth: `docs/ROADMAP.md`

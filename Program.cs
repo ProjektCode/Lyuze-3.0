@@ -5,7 +5,6 @@ using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Features.Admin;
 using Lyuze.Core.Features.Anime;
-using Lyuze.Core.Features.Integrations.N8n;
 using Lyuze.Core.Features.Profiles;
 using Lyuze.Core.Features.Roles;
 using Lyuze.Core.Infrastructure.Configuration;
@@ -63,7 +62,6 @@ public class Program {
                 services.AddSingleton<AdminService>();
                 services.AddSingleton<ReactionRolesService>();
                 services.AddSingleton<LevelingService>();
-                services.AddSingleton<N8nService>();
                 services.AddSingleton<WaifuService>();
                 services.AddSingleton<AnimeQuoteService>();
                 services.AddSingleton<TraceMoeService>();

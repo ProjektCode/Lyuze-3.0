@@ -92,7 +92,6 @@ namespace Lyuze.Core.Infrastructure.Logging {
                 "startup" => "START",
                 "host" => "HOSTN",
                 "interact" => "INTRC",
-                "n8n" => "N8NWH",
                 _ => src
             };
         }
