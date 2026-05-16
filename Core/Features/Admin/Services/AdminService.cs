@@ -1,7 +1,7 @@
 using Discord;
 using Discord.WebSocket;
 
-namespace Lyuze.Core.Features.Admin;
+namespace Lyuze.Core.Features.Admin.Services;
 
 /// <summary>
 /// Service responsible for administrative operations like message purging.

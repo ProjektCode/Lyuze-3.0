@@ -1,8 +1,10 @@
 using Discord;
 using Discord.Interactions;
 using Lyuze.Core.Extensions;
+using Lyuze.Core.Features.Anime.Services;
 
 namespace Lyuze.Core.Features.Anime {
+    [Group("anime", "Commands with anyting related to anime.")]
     public class AnimeModule(AnimeQuoteService animeQuoteService, TraceMoeService traceMoeService, SauceNaoService sauceNaoService, WaifuService waifuService) : InteractionModuleBase<SocketInteractionContext> {
         private readonly AnimeQuoteService _animeQuoteService = animeQuoteService;
         private readonly TraceMoeService _traceMoeService = traceMoeService;

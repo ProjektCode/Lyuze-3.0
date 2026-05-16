@@ -4,7 +4,7 @@ using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Models.API;
 using Lyuze.Core.Shared.Images;
 
-namespace Lyuze.Core.Features.Anime {
+namespace Lyuze.Core.Features.Anime.Services {
     public class TraceMoeService(ILoggingService logger, IApiClient apiClient, IEmbedService embedService, ColorUtils colorUtils) {
         private readonly ILoggingService _logger = logger;
         private readonly IApiClient _api = apiClient;

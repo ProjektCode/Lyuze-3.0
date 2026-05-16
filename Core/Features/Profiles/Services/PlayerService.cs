@@ -4,7 +4,7 @@ using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Infrastructure.Database;
 using Lyuze.Core.Abstractions.Interfaces;
 
-namespace Lyuze.Core.Features.Profiles {
+namespace Lyuze.Core.Features.Profiles.Services {
     public sealed class PlayerService(DatabaseContext db, SettingsConfig settings, ILoggingService logger) : IPlayerService {
         private readonly DatabaseContext _db = db;
         private readonly SettingsConfig _settings = settings;

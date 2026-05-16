@@ -4,7 +4,7 @@ using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Models.API;
 
-namespace Lyuze.Core.Features.Anime {
+namespace Lyuze.Core.Features.Anime.Services {
     public class SauceNaoService(ILoggingService logger, IApiClient apiClient, IEmbedService embedService, SettingsConfig settingsConfig, DanbooruIqdbService danbooruIqdbService) {
         private const double MinSimilarityPercent = 70.0;
         private const int MaxCandidates = 5;

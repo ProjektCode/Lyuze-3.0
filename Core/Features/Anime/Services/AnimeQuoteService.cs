@@ -1,7 +1,7 @@
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Models.API;
 
-namespace Lyuze.Core.Features.Anime {
+namespace Lyuze.Core.Features.Anime.Services {
     public class AnimeQuoteService(ILoggingService logger, IApiClient apiClient) {
         private readonly ILoggingService _logger = logger;
         private readonly IApiClient _apiClient = apiClient;

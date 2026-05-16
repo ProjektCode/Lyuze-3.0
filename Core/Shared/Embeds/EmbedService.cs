@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Lyuze.Core.Shared.Images;
 using Lyuze.Core.Features.Profiles;
 using Lyuze.Core.Abstractions.Interfaces;
+using Lyuze.Core.Features.Profiles.Services;
 
 namespace Lyuze.Core.Shared.Embeds {
     public class EmbedService(IEmbedColorProvider embedColorService, IPlayerService playerService, ILoggingService loggingService, ColorUtils colorUtils) : IEmbedService {

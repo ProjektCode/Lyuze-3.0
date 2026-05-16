@@ -4,7 +4,7 @@ using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Models.API;
 
-namespace Lyuze.Core.Features.Anime;
+namespace Lyuze.Core.Features.Anime.Services;
 
 public sealed class DanbooruIqdbService(ILoggingService logger, IApiClient apiClient, IEmbedService embedService, SettingsConfig settingsConfig) {
     private const int MaxCandidates = 5;

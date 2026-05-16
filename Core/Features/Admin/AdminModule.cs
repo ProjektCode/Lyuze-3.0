@@ -3,12 +3,14 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Extensions;
+using Lyuze.Core.Features.Admin.Services;
 using Lyuze.Core.Shared.Images;
 using Lyuze.Core.Shared.Images.Primitives;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace Lyuze.Core.Features.Admin {
+    [Group("admin", "Administrative commands for server management & Ower-based commands.")]
     public class AdminModule(
         IPlayerService playerService,
         ImageFetcher imageFetcher, ColorUtils colorUtils, ILoggingService logger, IEmbedService embedService) : InteractionModuleBase<SocketInteractionContext> {

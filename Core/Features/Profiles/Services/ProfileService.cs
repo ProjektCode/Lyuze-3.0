@@ -3,7 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
 
-namespace Lyuze.Core.Features.Profiles {
+namespace Lyuze.Core.Features.Profiles.Services {
     public class ProfileService(IEmbedService embedService, IPlayerService playerService, ILoggingService loggingService) {
         private readonly IEmbedService _embedService = embedService;
         private readonly IPlayerService _playerService = playerService;

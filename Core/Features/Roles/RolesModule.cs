@@ -3,9 +3,11 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Extensions;
+using Lyuze.Core.Features.Roles.Services;
 using Lyuze.Core.Infrastructure.Configuration;
 
 namespace Lyuze.Core.Features.Roles {
+    [Group("roles", "Commands related to role management and reaction roles")]
     public class RolesModule(ReactionRolesService reactionRoleHandler, SettingsConfig settingsConfig, ISettingsService settingsService, ILoggingService logger) : InteractionModuleBase<SocketInteractionContext> {
 
         private readonly ReactionRolesService _reactionRoleHandler = reactionRoleHandler;

@@ -2,10 +2,12 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Extensions;
+using Lyuze.Core.Features.Profiles.Services;
 using Lyuze.Core.Shared.Embeds;
 
 namespace Lyuze.Core.Features.Profiles {
 
+    [Group("profile", "Commands related to user profiles")]
     public class ProfileModule(ProfileService profileService) : InteractionModuleBase<SocketInteractionContext> {
         private readonly ProfileService _profileService = profileService;
 

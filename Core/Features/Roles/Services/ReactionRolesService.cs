@@ -6,7 +6,7 @@ using Lyuze.Core.Infrastructure.Database;
 using Lyuze.Core.Models;
 using MongoDB.Driver;
 
-namespace Lyuze.Core.Features.Roles;
+namespace Lyuze.Core.Features.Roles.Services;
 
 public sealed class ReactionRolesService {
     private readonly DiscordSocketClient _client;

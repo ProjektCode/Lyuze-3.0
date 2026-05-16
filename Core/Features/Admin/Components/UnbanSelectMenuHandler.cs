@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
+using Lyuze.Core.Features.Admin.Services;
 
 namespace Lyuze.Core.Features.Admin.Components;
 
