@@ -1,14 +1,18 @@
 ﻿using Discord.Interactions;
-using System.Runtime.InteropServices;
+using Lyuze.Core.Abstractions.Interfaces;
+using Lyuze.Core.Features.Utility.Services;
 
 namespace Lyuze.Core.Features.Utility {
-    public class HelpModule : InteractionModuleBase<SocketInteractionContext> {
+    public class HelpModule(HelpService helpService, ILoggingService loggingService) : InteractionModuleBase<SocketInteractionContext> {
+        private readonly HelpService _helpService = helpService;
 
         [SlashCommand("help", "Displays help information about available commands.")]
-        public async Task HelpAsync([Summary("Displays help information about available commands.")] string? command = null) {
-            // Implementation of the help command logic goes here.
-            // This will likely involve using the HelpService to retrieve information about commands and categories,
-            // and then formatting that information into a response to send back to the user.
+        public async Task HelpAsync() {
+            await DeferAsync(ephemeral: true);
+
+            var (embed, component) = await _helpService.RenderCategoryPickerAsync(Context, Context.User.Id);
+
+            await FollowupAsync(embed: embed, components: component, ephemeral: true);
         }
     }
 }

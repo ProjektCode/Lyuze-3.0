@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Extensions;
 using Lyuze.Core.Features.Admin.Services;
+using Lyuze.Core.Shared.Components;
 using Lyuze.Core.Shared.Images;
 using Lyuze.Core.Shared.Images.Primitives;
 using Microsoft.Extensions.Logging;
@@ -55,7 +56,7 @@ namespace Lyuze.Core.Features.Admin {
         public async Task KickCmd(SocketGuildUser user, string reason = "No reason given.") {
             await DeferAsync(ephemeral: true);
 
-            var result = await AdminService.KickUserAsync(Context.Guild, user, reason);
+            var result = await AdminService.KickUserAsync(user, reason);
             
             if (!result.IsSuccess) {
                 await FollowupAsync(embed: await _embedService.ErrorEmbedAsync("Admin", error: result.ErrorMessage ?? "Unknown Error Occurred."), ephemeral: true);
@@ -115,7 +116,7 @@ namespace Lyuze.Core.Features.Admin {
             // 4. Build the SelectMenu component
             // Embed moderator ID in customId for security verification
             var menu = new SelectMenuBuilder()
-                .WithCustomId($"unban-select:{Context.User.Id}")
+                .WithCustomId(CustomIds.UnbanSelect(Context.User.Id))
                 .WithPlaceholder("Select a user to unban")
                 .WithMinValues(1)
                 .WithMaxValues(1)

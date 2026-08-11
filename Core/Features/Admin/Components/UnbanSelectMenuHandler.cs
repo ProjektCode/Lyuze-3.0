@@ -3,14 +3,14 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Features.Admin.Services;
+using Lyuze.Core.Shared.Components;
 
 namespace Lyuze.Core.Features.Admin.Components;
 
 /// <summary>
 /// Handles the SelectMenu interaction when a moderator picks a banned user to unban.
 /// </summary>
-public class UnbanSelectMenuHandler(AdminService adminService, ILoggingService logger)
-    : InteractionModuleBase<SocketInteractionContext> {
+public class UnbanSelectMenuHandler(AdminService adminService, ILoggingService logger): InteractionModuleBase<SocketInteractionContext> {
 
     private readonly AdminService _adminService = adminService;
     private readonly ILoggingService _logger = logger;
@@ -21,7 +21,7 @@ public class UnbanSelectMenuHandler(AdminService adminService, ILoggingService l
     /// </summary>
     /// <param name="moderatorId">The ID of the mod who invoked /unban (embedded in customId).</param>
     /// <param name="selections">The selected values (we only allow 1).</param>
-    [ComponentInteraction("unban-select:*")]
+    [ComponentInteraction(CustomIds.UnbanSelectPattern)]
     public async Task HandleUnbanSelection(string moderatorId, string[] selections) {
         // 1. Security check: Only the original moderator can use this dropdown
         if (Context.User.Id.ToString() != moderatorId) {
@@ -56,11 +56,11 @@ public class UnbanSelectMenuHandler(AdminService adminService, ILoggingService l
             .WithCustomId($"unban-select:{moderatorId}")
             .WithPlaceholder($"Unbanned: {result.Username}")
             .WithDisabled(true)
-            .WithOptions(new List<SelectMenuOptionBuilder> {
+            .WithOptions([
                 new SelectMenuOptionBuilder()
                     .WithLabel("Completed")
                     .WithValue("done")
-            });
+            ]);
 
         var component = new ComponentBuilder()
             .WithSelectMenu(disabledMenu)

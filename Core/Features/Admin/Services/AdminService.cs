@@ -73,7 +73,7 @@ public sealed class AdminService {
         return PurgeResult.Success(toDelete);
     }
 
-    public static async Task<KickResult> KickUserAsync(IGuild guild, SocketGuildUser user, string? reason) {
+    public static async Task<KickResult> KickUserAsync(SocketGuildUser user, string? reason) {
         if (user is null) {
             return KickResult.Failure("User not found in the guild.");
         }

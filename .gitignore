@@ -362,9 +362,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# Graphify Output
-graphify-out/
-Core/graphify-out/
-
 #OpenCode
 .opencode/
