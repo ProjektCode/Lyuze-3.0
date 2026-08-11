@@ -18,10 +18,9 @@ namespace Lyuze.Core.Features.Examples {
                 Style = ButtonStyle.Primary
             };
 
-            var menu = new SelectMenuBuilder() {
-                CustomId = "menu_components",
-                Placeholder = "Sample Menu Placeholder"
-            };
+            var menu = new SelectMenuBuilder()
+                .WithCustomId("menu_components")
+                .WithPlaceholder("Sample Menu Placeholder");
 
             menu.AddOption("First Option", "First");
             menu.AddOption("Second Option", "Second");

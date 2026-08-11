@@ -12,7 +12,6 @@ namespace Lyuze.Core.Shared.Embeds {
         private readonly IEmbedColorProvider _embedColorService = embedColorService;
         private readonly ILoggingService _loggingService = loggingService;
         private readonly ColorUtils _colorUtils = colorUtils;
-
         // Private helper to create embed builders easily
         private EmbedBuilder CreateEmbed(string title, string description, Color? color) {
             var builder = new EmbedBuilder()
@@ -28,12 +27,12 @@ namespace Lyuze.Core.Shared.Embeds {
 
             return builder;
         }
-
+        
         public Task<Embed> ErrorEmbedAsync(string source, string error) {
             var embed = CreateEmbed($"ERROR | {source}", error, Color.Red).Build();
             return Task.FromResult(embed);
         }
-
+        //TODO: Needs to be updated to InteractionContext instead of SocketCommandContext
         public async Task<Embed> ProfileEmbedAsync(SocketGuildUser user, SocketInteractionContext ctx) {
 
             try {
@@ -77,7 +76,7 @@ namespace Lyuze.Core.Shared.Embeds {
                 return await ErrorEmbedAsync("GetProfileEmbed", ex.Message);
             }
         }
-
+        //TODO: Needs to be updated to InteractionContext instead of SocketCommandContext
         public async Task<Embed> UpdatedProfileAsync(SocketGuildUser user, SocketInteractionContext ctx, String UpdatedSection, String entry) {
             try {
 
@@ -99,6 +98,26 @@ namespace Lyuze.Core.Shared.Embeds {
                 return await ErrorEmbedAsync("ProfileUpdateEmbed", ex.Message);
             }
 
+        }
+
+        public async Task<Embed> LevelUpEmbedAsync(SocketGuildUser user, int newLevel, SocketInteractionContext ctx) {
+            try {
+                var embed = new EmbedBuilder {
+                    Title = "Level Up!",
+                    Description = $"{user.Username} has leveled up to level {newLevel}!",
+                    Color = new Color(await _colorUtils.RandomColorFromUrlAsync(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl())),
+                    ThumbnailUrl = user.GetAvatarUrl(ImageFormat.Auto, 256) ?? user.GetDefaultAvatarUrl(),
+                    Timestamp = DateTimeOffset.UtcNow,
+                    Footer = new EmbedFooterBuilder {
+                        Text = "Level Up",
+                        IconUrl = ctx.Guild.IconUrl ?? user.GetDefaultAvatarUrl()
+                    }
+                };
+                return embed.Build();
+            } catch (Exception ex) {
+                await _loggingService.LogErrorAsync("EmbedService", $"Error creating level up embed for {user.Username}: ", ex);
+                return await ErrorEmbedAsync("LevelUpEmbed", ex.Message);
+            }
         }
 
     }

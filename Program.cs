@@ -7,6 +7,7 @@ using Lyuze.Core.Features.Admin.Services;
 using Lyuze.Core.Features.Anime.Services;
 using Lyuze.Core.Features.Profiles.Services;
 using Lyuze.Core.Features.Roles.Services;
+using Lyuze.Core.Features.Utility.Services;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Infrastructure.Database;
 using Lyuze.Core.Infrastructure.DiscordNet;
@@ -71,6 +72,7 @@ public class Program {
                 services.AddSingleton<ProfileService>();
                 services.AddSingleton<ImageFetcher>();
                 services.AddSingleton<ColorUtils>();
+                services.AddSingleton<HelpService>();
 
                 // Providers
                 services.AddSingleton<IStatusProvider, StatusProvider>();

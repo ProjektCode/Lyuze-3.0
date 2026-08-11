@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Discord.Interactions;
 
 namespace Lyuze.Core.Extensions;
 
