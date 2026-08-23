@@ -11,6 +11,7 @@ namespace Lyuze.Core.Features.Profiles.Services {
 
         /// <summary>
         /// Validates that the caller is either the target user or has admin permissions.
+        /// TODO: Change this from an embed to a bool. For true if the user is the caller or an admin, false if not.
         /// </summary>
         private async Task<Embed?> ValidateOwnerOrAdminAsync(SocketGuildUser user, SocketInteractionContext ctx) {
             var caller = (SocketGuildUser)ctx.User;
@@ -22,7 +23,8 @@ namespace Lyuze.Core.Features.Profiles.Services {
         public async Task<Embed> GetProfileAsync(SocketGuildUser user, SocketInteractionContext ctx) {
             try {
                 var player = await _playerService.GetUserAsync(user);
-                if (!player.PublicProfile) 
+                var caller = await ValidateOwnerOrAdminAsync(user, ctx);
+                if (!player.PublicProfile && caller != null)
                     return await _embedService.ErrorEmbedAsync("ProfileService", "This user's profile is private");
 
                 return await _embedService.ProfileEmbedAsync(user, ctx);
