@@ -1,5 +1,5 @@
 ﻿using Discord.WebSocket;
-using Lyuze.Core.Features.Profiles;
+using Lyuze.Core.Features.Players.Models;
 
 namespace Lyuze.Core.Abstractions.Interfaces {
     public interface IPlayerService {

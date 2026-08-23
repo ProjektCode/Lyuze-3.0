@@ -3,9 +3,10 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
+using Lyuze.Core.Features.Players.Models;
 using Lyuze.Core.Shared.Images;
 
-namespace Lyuze.Core.Features.Profiles.Services {
+namespace Lyuze.Core.Features.Leveling.Services {
     public class LevelingService(IPlayerService player, ColorUtils colorUtils) {
 
         private readonly IPlayerService _player = player;

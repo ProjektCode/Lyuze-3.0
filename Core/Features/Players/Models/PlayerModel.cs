@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace Lyuze.Core.Features.Profiles {
+namespace Lyuze.Core.Features.Players.Models {
     public class PlayerModel {
         [BsonId]
         [BsonRepresentation(BsonType.Int64)]

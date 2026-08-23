@@ -3,7 +3,7 @@ using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Lyuze.Core.Abstractions.Interfaces;
-using Lyuze.Core.Features.Profiles.Services;
+using Lyuze.Core.Features.Leveling.Services;
 using Lyuze.Core.Features.Roles.Services;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Shared.Images;

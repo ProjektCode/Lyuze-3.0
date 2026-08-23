@@ -74,7 +74,7 @@ namespace Lyuze.Core.Features.Profiles {
         }
 
         [SlashCommand("setplvlnotifications", "Set whether you get notified when you level up")]
-        public async Task SetLevelNotifications([Summary("isNotify", "Set to true to make your level notification public, false for no notification")] bool isNotify, SocketGuildUser? user = null) {
+        public async Task SetLevelNotifications([Summary("user", "The user whose in-channel level notification setting should be toggled")]SocketGuildUser? user = null) {
 
             await DeferAsync(ephemeral: true);
             user ??= Context.User as SocketGuildUser;
@@ -82,7 +82,7 @@ namespace Lyuze.Core.Features.Profiles {
                 await FollowupAsync("Could not find the specified user.", ephemeral: true);
                 return;
             }
-            var embed = await _profileService.UpdateProfilePublicAsync(user, Context, isNotify);
+            var embed = await _profileService.UpdateLevelNotificationsAsync(user, Context);
             await FollowupAsync(embed: embed);
             await Context.DelayDeleteOriginalAsync(15);
 

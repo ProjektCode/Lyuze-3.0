@@ -2,9 +2,9 @@ using Discord;
 using Discord.WebSocket;
 using Discord.Interactions;
 using Lyuze.Core.Shared.Images;
-using Lyuze.Core.Features.Profiles;
 using Lyuze.Core.Abstractions.Interfaces;
-using Lyuze.Core.Features.Profiles.Services;
+using Lyuze.Core.Features.Leveling.Services;
+using Lyuze.Core.Features.Players.Models;
 
 namespace Lyuze.Core.Shared.Embeds {
     public class EmbedService(IEmbedColorProvider embedColorService, IPlayerService playerService, ILoggingService loggingService, ColorUtils colorUtils) : IEmbedService {

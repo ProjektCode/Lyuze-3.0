@@ -1,4 +1,4 @@
-using Lyuze.Core.Features.Profiles;
+using Lyuze.Core.Features.Players.Models;
 using Lyuze.Core.Infrastructure.Configuration;
 using Lyuze.Core.Models;
 using MongoDB.Driver;
