@@ -26,7 +26,7 @@ The project is intended for personal or small-server use. Each installation owns
 - [Specification](docs/SPEC.md)
 - [Roadmap](docs/ROADMAP.md)
 
-`docs/TASKS.md` is an internal repository task index. Detailed implementation task sheets are maintained separately in the project vault and are not public deployment documentation.
+Internal implementation tracking is maintained separately from public deployment documentation.
 
 ## Prerequisites
 

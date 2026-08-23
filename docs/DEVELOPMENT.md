@@ -139,6 +139,14 @@ For documentation-only changes, check:
 - Internal task tracking is not being presented as public user documentation.
 - Links resolve from the document's location.
 
+## Wiki publishing
+
+The public documentation allowlist is stored in `.github/public-docs.txt`. The future wiki publisher reads that file and syncs only the approved documents to the GitHub Wiki. Keep `docs/TASKS.md`, vault notes, runtime settings, and other internal material out of the allowlist.
+
+Treat the repository as the documentation source of truth. Direct wiki edits may be overwritten by the next successful publisher run.
+
+The publisher runs on `master` documentation changes and through manual dispatch. Its write permission is limited to the publishing job. If the repository token cannot write to the wiki repository, configure a narrowly scoped `WIKI_PUSH_TOKEN` GitHub secret instead of placing a token in source control.
+
 ## Pull requests and branches
 
 Use short-lived branches with descriptive names:
