@@ -54,22 +54,12 @@ Keep these project documents aligned for meaningful work:
 - Preserve async patterns and nullable-reference correctness.
 - Keep MongoDB access behind the existing database/context and service boundaries.
 
-## Current worktree state
+## Project status
 
-The Players/Leveling split is in progress. Treat it as incomplete until verification proves otherwise.
-
-Known affected areas:
-
-- `Core/Features/Players/`
-- `Core/Features/Leveling/`
-- `Core/Abstractions/Interfaces/IPlayerService.cs`
-- `Core/Features/Profiles/ProfileModule.cs`
-- `Core/Infrastructure/Database/DatabaseContext.cs`
-- `Core/Infrastructure/DiscordNet/Handlers/EventHandler.cs`
-- `Core/Shared/Embeds/EmbedService.cs`
-- `Program.cs`
-
-Do not discard or reset these changes. Do not claim the refactor is complete without a successful build and review of affected profile/leveling flows.
+- Treat `docs/TASKS.md` as the current implementation and verification index.
+- Treat `docs/ROADMAP.md` as the ordered project direction and scope reference.
+- Read those documents before assuming a feature, refactor, or verification item is complete.
+- Check `git status` before relying on the current worktree state. Preserve unrelated user changes and do not reset or clean the repository blindly.
 
 ## Verification
 
