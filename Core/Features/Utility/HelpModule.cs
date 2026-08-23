@@ -3,7 +3,7 @@ using Lyuze.Core.Abstractions.Interfaces;
 using Lyuze.Core.Features.Utility.Services;
 
 namespace Lyuze.Core.Features.Utility {
-    public class HelpModule(HelpService helpService, ILoggingService loggingService) : InteractionModuleBase<SocketInteractionContext> {
+    public class HelpModule(HelpService helpService) : InteractionModuleBase<SocketInteractionContext> {
         private readonly HelpService _helpService = helpService;
 
         [SlashCommand("help", "Displays help information about available commands.")]
