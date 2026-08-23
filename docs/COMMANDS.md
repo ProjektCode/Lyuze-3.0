@@ -1,84 +1,78 @@
-# Command Reference
+# Command reference
 
-Lyuze 3.0 provides a rich set of commands categorized by their functionality. This document lists all available slash commands, user commands, and message commands, along with their descriptions, parameters, and required permissions.
+This page lists the commands currently defined in the repository. Grouped commands are shown using Discord's group/subcommand form.
 
-## Table of Contents
+Command registration is currently configured for the guild ID in the private runtime settings.
 
-*   [Admin Commands](#admin-commands)
-*   [Anime Commands](#anime-commands)
-*   [Profile Commands](#profile-commands)
-*   [Roles Commands](#roles-commands)
+## General commands
 
-*   [Example Commands](#example-commands)
+| Command | Description | Access |
+|---|---|---|
+| `/help` | Opens the ephemeral help interface. | Everyone |
+| `/ping` | Development/example ping command when enabled. | Everyone |
+| `/components` | Development/example component command. | Everyone |
 
----
+## Administration commands
 
-## Admin Commands
+These commands are grouped under `/admin`.
 
-These commands are primarily for server administration and moderation.
+| Command | Description | Access |
+|---|---|---|
+| `/admin purge [amount]` | Deletes recent messages within Discord's bulk-delete age limit. | Manage Messages |
+| `/admin kick <user> [reason]` | Kicks a guild member. | Kick Members |
+| `/admin ban <user> <pruneDays> [reason]` | Bans a guild member and optionally prunes recent messages. | Ban Members |
+| `/admin unban` | Opens a select menu for recently banned users. | Ban Members |
+| `/admin unban-id <user-id> [reason]` | Unbans a user by numeric Discord ID. | Ban Members |
+| `/admin kill` | Stops the bot process. | Bot owner |
+| `/admin test` | Runs an owner-only image/banner test. | Bot owner |
 
-| Command | Description | Parameters | Permissions |
-| :------ | :---------- | :--------- | :---------- |
-| `/purge <amount>` | Purges a specified `amount` of messages from the current channel within the last 14 days. | `amount` (int, default: 200) | Bot: `ManageMessages`<br>User: `ManageMessages` |
-| `/kick <user> [reason]` | Kicks a specified user from the server. | `user` (User)<br>`reason` (string, optional, default: "No reason given.") | Bot: `KickMembers`<br>User: `KickMembers` |
-| `/ban <user> <pruneDays> [reason]` | Bans a specified user from the server and optionally deletes their messages from the last `pruneDays`. | `user` (User)<br>`pruneDays` (int)<br>`reason` (string, optional, default: "No reason given.") | Bot: `BanMembers`<br>User: `BanMembers` |
-| `/unban` | Initiates an interactive process to unban a user. Presents a select menu of up to 25 recently banned users. | None | Bot: `BanMembers`<br>User: `BanMembers` |
-| `/unban-id <user-id> [reason]` | Unbans a user by their Discord ID. Useful for unbanning users not in the recent ban list. | `user-id` (string)<br>`reason` (string, optional) | Bot: `BanMembers`<br>User: `BanMembers` |
-| `/kill` | Shuts down the bot process. | None | Bot Owner Only |
-| `/test` | A test command, currently generates a welcome banner image. | None | Bot Owner Only |
+All moderation actions should use a reason and should be tested against the bot's role hierarchy and permissions.
 
----
+## Anime and image commands
 
-## Anime Commands
+These commands are grouped under `/anime`.
 
-Commands related to anime, image tracing, and waifu images.
+| Command | Description | Access |
+|---|---|---|
+| `/anime aquote` | Returns a random anime quote. | Everyone |
+| `/anime trace [image] [url]` | Attempts to identify an anime scene from an upload or URL. | Everyone |
+| `/anime sauce [image] [url]` | Attempts to find the source of an image. | Everyone |
+| `/anime waifu <tag>` | Requests a tagged image from the configured provider. | Everyone |
 
-| Command | Description | Parameters | Permissions |
-| :------ | :---------- | :--------- | :---------- |
-| `/aquote` | Gets a random anime quote. | None | Everyone |
-| `/trace [image] [url]` | Finds the anime source from an image. Provide either an `image` attachment or a direct `url`. | `image` (Attachment, optional)<br>`url` (string, optional) | Everyone |
-| `/sauce [image] [url]` | Finds the source of an image. Provide either an `image` attachment or a direct `url`. | `image` (Attachment, optional)<br>`url` (string, optional) | Everyone |
-| `/waifu <tag>` | Gets a random waifu image based on a specified `tag`. | `tag` (string) | Everyone |
+See [Anime and image search](ANIME-IMAGE-SEARCH.md) for provider behavior and troubleshooting.
 
----
+## Profile commands
 
-## Profile Commands
+These commands are grouped under `/profile`.
 
-Commands for viewing and customizing user profiles.
+| Command | Description | Access |
+|---|---|---|
+| `/profile profile [user]` | Displays a user's profile. | Everyone |
+| `/profile setprofilebg <url>` | Sets a profile background URL. | Everyone |
+| `/profile setprofileaboutme <aboutme>` | Sets the profile About Me text. | Everyone |
+| `/profile setprofilestatus <ispublic>` | Sets profile visibility. | Everyone |
+| `/profile setplvlnotifications [user]` | Toggles in-channel level-up notifications. It is not the profile-visibility setting. | Everyone; verify target-user permissions before enabling delegated use |
 
-| Command | Description | Parameters | Permissions |
-| :------ | :---------- | :--------- | :---------- |
-| `/profile [user]` | Views a user's profile. If no user is specified, it shows the command invoker's profile. | `user` (User, optional) | Everyone |
-| `/setprofilebg <url>` | Sets your profile background image using a direct `url`. | `url` (string) | Everyone |
-| `/setprofileaboutme <aboutme>` | Sets the text for your profile "About Me" section. | `aboutme` (string) | Everyone |
-| `/setprofilestatus <ispublic>` | Sets whether your profile is public (`true`) or private (`false`). | `ispublic` (boolean) | Everyone |
-| `/setplvlnotifications <isNotify>` | Sets whether you receive level-up notifications (`true`) or not (`false`). | `isNotify` (boolean) | Everyone |
+The current level-notification command is a toggle. It does not use an `isNotify` boolean argument.
 
----
+The bot must deliver level-up notifications in a configured guild channel or interaction context, never by DM.
 
-## Roles Commands
+## Role commands
 
-Commands for managing Discord roles, especially reaction roles.
+These commands are grouped under `/roles`.
 
-| Command | Description | Parameters | Permissions |
-| :------ | :---------- | :--------- | :---------- |
-| `/remove_role <user>` | Allows a user to remove a role from themselves, or an admin to remove a role from another user via a select menu. | `user` (User) | User: `ManageRoles` (for others) |
-| `/setup_reaction_roles` | Sets up the initial embed message for reaction roles. The bot will store the message ID for future edits. | None | User: `Administrator` |
-| `/add_reaction_roles <selectedEmoji> <role>` | Adds a new reaction role to the previously set up reaction roles message. Associates an `emoji` with a Discord `role`. | `selectedEmoji` (string)<br>`role` (Role) | User: `Administrator` |
-| `/add_bot_reaction <selectedEmoji> <role>` | *Note: This command's description suggests it only adds a reaction, but its implementation also registers a reaction role. It appears functionally similar to `/add_reaction_roles`.* Adds a reaction to the reaction roles message and registers the associated role. | `selectedEmoji` (string)<br>`role` (Role) | User: `Administrator` |
+| Command | Description | Access |
+|---|---|---|
+| `/roles remove_role <user>` | Removes a selected role through the role-management flow. | Depends on target/role permissions |
+| `/roles setup_reaction_roles` | Creates the reaction-role configuration message. | Administrator |
+| `/roles add_reaction_roles <selectedEmoji> <role>` | Adds an emoji-to-role mapping. | Administrator |
+| `/roles add_bot_reaction <selectedEmoji> <role>` | Adds a reaction and currently overlaps with reaction-role setup. | Administrator |
 
+Reaction-role configuration is still being hardened. Verify role hierarchy, managed roles, message existence, and duplicate mappings before using it in production.
 
----
+## Command registration notes
 
-## Example Commands
-
-These commands are primarily for demonstration purposes of Discord.NET's interaction capabilities.
-
-| Command | Type | Description | Parameters | Permissions |
-| :------ | :--- | :---------- | :--------- | :---------- |
-| `/ping` | Slash | A simple ping-pong command. | None | Everyone |
-| `/components` | Slash | Demonstrates Discord components (buttons and selectable menus). | None | Everyone |
-| `Add Switch Plays Role` | User | Adds a "Switch Plays" role to the selected user. | `user` (User, implicit) | Everyone |
-| `Add Gamer Role` | User | Adds a "Gamer" role to the selected user. | `user` (User, implicit) | Everyone |
-| `Add Weeb Role` | User | Adds a "Weeb" role to the selected user. | `user` (User, implicit) | Everyone |
-| `Message Command Test` | Message | Responds with the author of the selected message. | `msg` (Message, implicit) | Everyone |
+- Commands are discovered from the entry assembly by the interaction handler.
+- Commands are registered on the configured guild during the Discord ready flow.
+- Discord permissions and preconditions are part of the command behavior.
+- Some demonstration commands may remain in the repository while the project is under development.

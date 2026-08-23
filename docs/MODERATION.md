@@ -1,64 +1,74 @@
-# Moderation Commands
+# Moderation commands
 
-[&#8592; Back to README](../README.md) | [&#8592; Back to Commands List](./COMMANDS.md)
+Lyuze includes basic administration and moderation commands. Responses are normally ephemeral, while the Discord server's audit log records supported moderation actions when a reason is supplied.
 
-Lyuze 3.0 provides a suite of moderation commands to help server administrators manage their communities effectively. All moderation command responses are ephemeral, meaning only the user who invoked the command can see them.
+The command names below use the current `/admin` command group.
+
+## Permissions and safety
+
+Before using moderation commands, confirm:
+
+- The bot has the required Discord permission.
+- The bot's role is higher than the target member's role.
+- The target is not the server owner or otherwise protected by Discord.
+- The reason does not contain secrets or unnecessary private information.
+- The configured moderation/log destination is accessible only to the intended staff.
 
 ## Commands
 
-### `/purge`
-- **Description**: Deletes a specified number of messages from the channel within the last 14 days.
-- **Permissions**:
-    - Bot: `Manage Messages`
-    - User: `Manage Messages`
-- **Behavior**:
-    - Responses are ephemeral.
-    - Can only be used in text channels.
-    - Messages older than 14 days cannot be purged due to Discord API limitations.
-- **Parameters**:
-    - `amount`: The number of messages to delete (default: 200, maximum: 1000).
+### `/admin purge [amount]`
 
-### `/kick`
-- **Description**: Kicks a specified user from the server.
-- **Permissions**:
-    - Bot: `Kick Members`
-    - User: `Kick Members`
-- **Behavior**:
-    - Responses are ephemeral.
-- **Parameters**:
-    - `user`: The user to kick (required).
-    - `reason`: The reason for the kick (optional, defaults to "No reason given."). This reason will appear in the server's audit log.
+Deletes recent messages from the current text channel.
 
-### `/ban`
-- **Description**: Bans a specified user from the server.
-- **Permissions**:
-    - Bot: `Ban Members`
-    - User: `Ban Members`
-- **Behavior**:
-    - Responses are ephemeral.
-- **Parameters**:
-    - `user`: The user to ban (required).
-    - `pruneDays`: The number of days to delete messages from the banned user (required).
-    - `reason`: The reason for the ban (optional, defaults to "No reason given."). This reason will appear in the server's audit log.
+- Required bot permission: `Manage Messages`.
+- Required user permission: `Manage Messages`.
+- Default amount: 200.
+- Maximum amount: 1000.
+- Discord's bulk-delete age limit still applies.
+- The command can only run in a text channel.
 
-### `/unban`
-- **Description**: Unbans a user from the server using an interactive dropdown menu.
-- **Permissions**:
-    - Bot: `Ban Members`
-    - User: `Ban Members`
-- **Behavior**:
-    - Responses are ephemeral.
-    - Presents a dropdown menu listing up to 25 currently banned users.
-    - If more than 25 users are banned, the command will suggest using `/unban-id` for users not listed in the dropdown.
-    - The dropdown menu expires after 15 minutes.
+### `/admin kick <user> [reason]`
 
-### `/unban-id`
-- **Description**: Unbans a user by their Discord ID. This command serves as a fallback for large ban lists or when a user is not present in the `/unban` dropdown.
-- **Permissions**:
-    - Bot: `Ban Members`
-    - User: `Ban Members`
-- **Behavior**:
-    - Responses are ephemeral.
-- **Parameters**:
-    - `user-id`: The Discord ID of the user to unban (required, numeric).
-    - `reason`: The reason for the unban (optional). This reason will appear in the server's audit log.
+Kicks a guild member.
+
+- Required bot permission: `Kick Members`.
+- Required user permission: `Kick Members`.
+- The reason is sent as the Discord audit-log reason.
+- The command does not DM the target user.
+
+### `/admin ban <user> <pruneDays> [reason]`
+
+Bans a guild member and optionally removes recent messages according to `pruneDays`.
+
+- Required bot permission: `Ban Members`.
+- Required user permission: `Ban Members`.
+- The reason is sent as the Discord audit-log reason.
+- Validate the prune value and target hierarchy before execution.
+
+### `/admin unban`
+
+Opens a select menu containing up to 25 banned users.
+
+- Required bot permission: `Ban Members`.
+- Required user permission: `Ban Members`.
+- The interaction is temporary and expires according to the component handler behavior.
+- Use `/admin unban-id` when the target is not in the displayed list.
+
+### `/admin unban-id <user-id> [reason]`
+
+Unbans a user by numeric Discord ID.
+
+- Required bot permission: `Ban Members`.
+- Required user permission: `Ban Members`.
+- The reason is sent as the Discord audit-log reason.
+- The user ID must parse as a Discord snowflake.
+
+### Owner-only administration
+
+The repository currently contains `/admin kill` and `/admin test` owner-only commands. These are development/operations commands and should not be exposed casually in a public server.
+
+## Planned moderation
+
+The roadmap includes timeout, warnings, slowmode, lock/unlock, modlog, cases, and Discord AutoMod integration. Those features are planned and are not represented as completed behavior by this document.
+
+Lyuze should use Discord's built-in AutoMod for supported keyword, spam, mention-spam, preset, and profile rules instead of duplicating every filter in custom message code. Custom checks such as invite filtering must be coordinated with AutoMod to avoid duplicate actions.

@@ -1,50 +1,62 @@
-# Anime Image Search
+# Anime and image search
 
-[&#8592; Back to README](../README.md) | [&#8592; Back to Commands List](./COMMANDS.md)
+Lyuze provides anime quotes, anime-scene tracing, image-source lookup, and tagged image retrieval through external providers.
 
-Lyuze 3.0 offers advanced anime image tracing capabilities, integrating with multiple services to provide accurate source identification. The bot intelligently switches between SauceNAO and Danbooru IQDB based on confidence levels and service availability.
+## Commands
 
-## How it Works
+The current commands are grouped under `/anime`:
 
-When you request an image search, the bot first attempts to use **SauceNAO**. If SauceNAO does not return a confident match (below a 70% similarity threshold), returns no results, or hits a rate limit, the bot automatically falls back to **Danbooru IQDB**.
+- `/anime aquote`
+- `/anime trace`
+- `/anime sauce`
+- `/anime waifu`
 
-### SauceNAO
-- **Primary Service**: Used first for image tracing.
-- **API Key**: Requires a `Sauce Nao` API key configured in `settings.json`. Without it, the bot will directly use Danbooru IQDB.
-- **Threshold**: A minimum similarity of 70% is required for a SauceNAO result to be considered a confident match. If the top match falls below this, Danbooru IQDB is used as a fallback.
+Check [Commands](COMMANDS.md) for the current parameters and permissions.
 
-### Danbooru IQDB
-- **Fallback Service**: Used when SauceNAO is unavailable or does not provide a confident match.
-- **Scores**: Danbooru IQDB uses a different matching algorithm, and its similarity scores might appear lower than SauceNAO's, even for good matches. This is normal behavior.
-- **Authentication (Optional)**: For higher rate limits and more reliable service, you can provide `Danbooru Login` and `Danbooru Api Key` in `settings.json`.
+## Image tracing flow
 
-## Configuration
+### `/anime trace`
 
-API keys and login details for the image search services are managed in the bot's runtime settings file.
+The bot accepts an image upload or a direct image URL and attempts to identify the anime scene.
 
-- **Runtime Settings Location**: `Resources/Settings/settings.json` (relative to the bot's executable directory). For more details, see [`docs/CONFIGURATION.md`](./CONFIGURATION.md).
+### `/anime sauce`
 
-The relevant properties within the `APIs` section of `settings.json` are:
+The bot accepts an image upload or direct image URL and attempts to find an image source. The repository uses SauceNAO with a Danbooru IQDB fallback path.
 
-- `Sauce Nao`: Your SauceNAO API key.
-- `Danbooru Login`: Your Danbooru username (optional, for higher rate limits).
-- `Danbooru Api Key`: Your Danbooru API key (optional, for higher rate limits).
+When an image is attached to an ephemeral Discord response, the attachment URL may not be usable by an external provider. The bot downloads the image internally before sending it to the configured provider.
 
-**Example `APIs` section in `settings.json` (do NOT include real keys):**
-```json
-{
-  "APIs": {
-    "Sauce Nao": "YOUR_SAUCENAO_API_KEY",
-    "Danbooru Login": "YOUR_DANBOORU_USERNAME",
-    "Danbooru Api Key": "YOUR_DANBOORU_API_KEY"
-  }
-}
-```
+## Provider configuration
+
+Some providers require API credentials. Configure them only in the private `APIs` section of `Resources/Settings/settings.json`:
+
+- `Sauce Nao`: SauceNAO API key.
+- `Danbooru Login`: Optional Danbooru username.
+- `Danbooru Api Key`: Optional Danbooru API key.
+
+Do not publish real keys, login details, or private image URLs. Use placeholders in examples.
+
+## Fallback behavior
+
+The image-source flow should:
+
+1. Validate the upload or URL.
+2. Download the image through the bot's HTTP client when needed.
+3. Try the primary provider.
+4. Fall back when the primary provider has no usable match, is unavailable, or is rate-limited.
+5. Return a useful error without exposing provider credentials.
+
+Similarity scores from different providers are not directly comparable. A lower score from a fallback provider does not necessarily mean the result is unusable.
 
 ## Troubleshooting
 
-### 403 Forbidden Errors
-If you encounter 403 Forbidden errors when the bot attempts to access image search APIs, it might be due to missing or incorrect `User-Agent` headers in the HTTP requests. The bot's internal API client is configured to handle this, but if you are debugging network issues, ensure that requests include a valid `User-Agent`.
+### Provider returns 403
 
-### Discord Ephemeral Attachment Caveat
-When using the image search command with an image attached to an *ephemeral* Discord message, direct links to that attachment are typically not accessible by external services. The bot handles this by downloading the image internally before sending it to SauceNAO or Danbooru IQDB. However, if you are manually providing links, ensure they are publicly accessible.
+Check that the bot's HTTP client sends a valid User-Agent and that the provider credentials, if required, are configured correctly.
+
+### URL cannot be accessed
+
+Confirm the URL is a direct, publicly reachable image URL. Discord ephemeral attachment URLs may require the bot to download the file before sending it to an external provider.
+
+### Provider rate limit
+
+Wait for the provider's limit window and use the fallback path when available. Do not add aggressive retry loops that can increase rate limiting.

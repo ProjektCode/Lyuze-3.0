@@ -1,191 +1,161 @@
-# Development Guide
+# Development guide
 
-This guide provides instructions for setting up your development environment, building, running, debugging, and extending Lyuze 3.0.
-
-## Table of Contents
-
-*   [Prerequisites](#prerequisites)
-*   [Setting Up Your Environment](#setting-up-your-environment)
-*   [Building and Running](#building-and-running)
-*   [Debugging](#debugging)
-*   [Adding a New Command Module](#adding-a-new-command-module)
-*   [Adding a New Service](#adding-a-new-service)
-*   [Coding Conventions (Inferred)](#coding-conventions-inferred)
-
----
+This guide explains how to build, run, debug, and extend Lyuze 3.0.
 
 ## Prerequisites
 
-*   [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or newer.
-*   An IDE like [Visual Studio](https://visualstudio.microsoft.com/) (recommended) or [Visual Studio Code](https://code.visualstudio.com/).
-*   Git for version control.
-*   A local or remote MongoDB instance for persistence.
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) or newer.
+- Git.
+- An IDE such as Visual Studio or Visual Studio Code.
+- A private Discord bot application and test guild.
+- A local or remote MongoDB instance.
 
-## Setting Up Your Environment
-
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-repo/Lyuze-Bot.git
-    cd "Lyuze 3.0/Lyuze Bot"
-    ```
-2.  **Open in IDE:**
-    *   **Visual Studio:** Open the `Lyuze 3.0.sln` solution file.
-    *   **Visual Studio Code:** Open the `Lyuze Bot` folder.
-3.  **Configure `settings.json`:**
-    *   The bot expects a `settings.json` file in `Resources/Settings/` relative to the executable. If you run the bot once, it will generate a template.
-    *   Populate this file with your Discord bot token, `GuildID`, MongoDB connection string, and any API keys required for features you want to test.
-    *   Refer to [`docs/CONFIGURATION.md`](./docs/CONFIGURATION.md) for details on each setting.
-
-## Building and Running
-
-### Build
-
-To build the project from the command line:
+Clone the repository:
 
 ```bash
-dotnet build "Lyuze Bot.csproj"
+git clone https://github.com/ProjektCode/Lyuze-3.0.git
+cd Lyuze-3.0
 ```
 
-Or, if you are in the solution directory:
+The solution file is:
+
+```text
+Lyuze 3.0.sln
+```
+
+The main project file is:
+
+```text
+Lyuze 3.0.csproj
+```
+
+## Build and run
+
+Restore and build the solution:
 
 ```bash
-dotnet build
+dotnet restore "Lyuze 3.0.sln"
+dotnet build "Lyuze 3.0.sln" --no-restore
 ```
 
-### Run
-
-To run the bot from the command line:
+Run the bot project:
 
 ```bash
-dotnet run --project "Lyuze Bot.csproj"
+dotnet run --project "Lyuze 3.0.csproj"
 ```
 
-If running from Visual Studio, simply press `F5` or the "Start" button.
+The application targets `net8.0-windows`. Use a Windows development environment for the supported runtime path.
+
+Do not commit `Resources/Settings/settings.json` or copy its contents into issues and pull requests.
 
 ## Debugging
 
-1.  **Set `settings.json`:** Ensure your `settings.json` is correctly configured, especially the Discord token and `GuildID`.
-2.  **Start Debugging:**
-    *   **Visual Studio:** Set `Lyuze Bot` as the startup project and press `F5`.
-    *   **Visual Studio Code:** Configure a `launch.json` for a .NET Core application and start debugging.
-3.  **Breakpoints:** Place breakpoints in your code (e.g., in command methods, event handlers) to inspect variables and execution flow.
-4.  **Logging:** Monitor the console output for logs from the `ILoggingService`. The `EventHandler` pipes Discord.NET's internal logs and `InteractionService` logs to this service.
+1. Configure a private `settings.json` using [Configuration](CONFIGURATION.md).
+2. Start the bot from Visual Studio, Visual Studio Code, or `dotnet run`.
+3. Watch the console for startup, Discord, database, and command-registration errors.
+4. Place breakpoints in command modules, infrastructure handlers, and feature services.
+5. Reproduce behavior in a dedicated test guild rather than a production community.
+6. Remove or redact sensitive information before sharing logs.
 
-## Adding a New Command Module
+## Architecture conventions
 
-To add a new set of slash commands or other interactions:
+- Put user-facing commands in `Core/Features/<Feature>/`.
+- Put feature business rules in feature services.
+- Put Discord.NET event wiring in `Core/Infrastructure/DiscordNet/Handlers/`.
+- Put database and external-service integration in infrastructure or feature-owned adapters.
+- Put reusable cross-feature helpers in `Core/Shared/`.
+- Register services in `Program.cs`.
+- Keep persistence behind service/database boundaries.
+- Preserve the no-DM product rule.
 
-1.  **Create a new Module class:**
-    *   Create a new folder under `Core/Features/YourFeatureName` (e.g., `Core/Features/MyNewFeature`).
-    *   Create a new class (e.g., `MyNewModule.cs`) that inherits from `Discord.Interactions.InteractionModuleBase<SocketInteractionContext>`.
-    *   Example structure:
-        ```csharp
-        using Discord.Interactions;
-        using Discord.WebSocket;
+## Adding a command module
 
-        namespace Lyuze.Core.Features.MyNewFeature
-        {
-            public class MyNewModule : InteractionModuleBase<SocketInteractionContext>
-            {
-                // Inject any services your module needs via constructor
-                public MyNewModule(/* MyService myService */)
-                {
-                    // _myService = myService;
-                }
+1. Create a feature folder under `Core/Features/`.
+2. Add a class inheriting from `InteractionModuleBase<SocketInteractionContext>`.
+3. Add slash, user, message, modal, or component attributes as appropriate.
+4. Inject only the services the module needs.
+5. Put business logic in a service when it involves persistence, external APIs, or more than simple response formatting.
+6. Register custom services in `Program.cs`.
+7. Build the solution and verify the command in a test guild.
 
-                [SlashCommand("mycommand", "A description for my new command")]
-                // [RequireUserPermission(GuildPermission.Administrator)] // Optional: Add permissions
-                public async Task MyCommandAsync(
-                    [Summary("param1", "Description for param1")] string param1,
-                    [Summary("param2", "Description for param2")] int param2)
-                {
-                    await DeferAsync(ephemeral: true); // Acknowledge the interaction
-                    // Your command logic here
-                    await FollowupAsync($"You used mycommand with {param1} and {param2}!", ephemeral: true);
-                }
+Example shape:
 
-                // Add more slash commands, user commands, message commands, or component interactions
-            }
-        }
-        ```
-2.  **Register Dependencies (if any):**
-    *   If your new module requires custom services, ensure those services are registered in `Program.cs` within the `ConfigureServices` method.
-3.  **No explicit module registration needed:** The `InteractionHandler` automatically discovers and registers all `InteractionModuleBase` classes in the entry assembly.
-4.  **Run and Test:** Start the bot. The new commands should appear in Discord after the bot registers them (usually on `Ready` event).
+```csharp
+using Discord.Interactions;
 
-## Adding a New Service
+namespace Lyuze.Core.Features.Example;
 
-To add a new service that encapsulates business logic:
+public sealed class ExampleModule : InteractionModuleBase<SocketInteractionContext>
+{
+    [SlashCommand("example", "Run an example command")]
+    public async Task ExampleAsync()
+    {
+        await RespondAsync("Example response", ephemeral: true);
+    }
+}
+```
 
-1.  **Define an Interface (Optional but Recommended):**
-    *   Create an interface in `Core/Abstractions/Interfaces` (e.g., `IMyNewService.cs`). This promotes loose coupling and testability.
-    *   Example:
-        ```csharp
-        namespace Lyuze.Core.Abstractions.Interfaces
-        {
-            public interface IMyNewService
-            {
-                Task<string> DoSomethingAsync(string input);
-            }
-        }
-        ```
-2.  **Implement the Service:**
-    *   Create the service class in an appropriate `Core/Features/YourFeatureName` or `Core/Shared` folder (e.g., `Core/Features/MyNewFeature/MyNewService.cs`).
-    *   Implement the interface.
-    *   Example:
-        ```csharp
-        using Lyuze.Core.Abstractions.Interfaces;
+The interaction handler discovers modules from the entry assembly. A module normally does not need a separate registration, but any injected custom service does.
 
-        namespace Lyuze.Core.Features.MyNewFeature
-        {
-            public class MyNewService : IMyNewService
-            {
-                private readonly ILoggingService _logger;
+## Adding a service
 
-                public MyNewService(ILoggingService logger) // Inject dependencies
-                {
-                    _logger = logger;
-                }
+1. Place the service beside the feature that owns its behavior.
+2. Add an interface under `Core/Abstractions/Interfaces/` when the service needs an abstraction for multiple implementations or testing.
+3. Inject dependencies through the constructor.
+4. Register the service in `Program.cs` with the appropriate lifetime.
+5. Add persistence and error-handling behavior in the service rather than in the command module.
+6. Add or update verification coverage.
 
-                public async Task<string> DoSomethingAsync(string input)
-                {
-                    _logger.LogInformationAsync("MyNewService", $"Doing something with: {input}");
-                    await Task.Delay(100); // Simulate async work
-                    return $"Processed: {input.ToUpper()}";
-                }
-            }
-        }
-        ```
-3.  **Register the Service in DI:**
-    *   Open `Program.cs`.
-    *   In the `ConfigureServices` method, add a registration for your service. Use `AddSingleton`, `AddScoped`, or `AddTransient` based on its lifecycle requirements. Most bot services are `AddSingleton`.
-    *   Example:
-        ```csharp
-        services.AddSingleton<IMyNewService, MyNewService>();
-        // If no interface:
-        // services.AddSingleton<MyNewService>();
-        ```
-4.  **Inject and Use:**
-    *   You can now inject `IMyNewService` (or `MyNewService` if no interface) into any other service or command module that needs it via their constructors.
+For new logging, use Microsoft's `ILogger<T>` pipeline. `ILoggingService` is a compatibility layer during the migration and should not receive new call sites unless there is a specific reason.
 
-## Coding Conventions (Inferred)
+## Discord event handling
 
-Based on the existing codebase, the following conventions are observed:
+Keep Discord.NET subscriptions in infrastructure handlers.
 
-*   **C# Language Features:** Uses modern C# features (e.g., `using` declarations, `required` keyword, `file-scoped namespaces`, `primary constructors` for services/modules).
-*   **Asynchronous Programming:** Heavily relies on `async`/`await` for I/O operations.
-*   **Dependency Injection:** Services are injected via constructor.
-*   **Logging:** Uses `ILoggingService` for structured logging.
-*   **Configuration:** Centralized in `settings.json` and accessed via `SettingsConfig`.
-*   **Error Handling:** `try-catch` blocks are used for critical operations, often logging errors with `ILoggingService`.
-*   **Discord.NET Usage:**
-    *   Uses `InteractionModuleBase<SocketInteractionContext>` for command modules.
-    *   `DeferAsync()` is commonly used to acknowledge interactions before processing.
-    *   `FollowupAsync()` and `RespondAsync()` for sending responses.
-    *   `Context.DelayDeleteOriginalAsync()` for ephemeral messages.
-*   **Naming:**
-    *   Interfaces start with `I` (e.g., `ILoggingService`).
-    *   Private readonly fields start with `_` (e.g., `_client`).
-    *   Methods use PascalCase.
-    *   Local variables use camelCase.
-*   **File Structure:** Features are typically organized into `Core/Features/FeatureName` folders, containing modules, services, and models related to that feature. Infrastructure concerns are in `Core/Infrastructure`.
+Current examples include:
+
+- `UserJoined` for profile creation and welcome behavior.
+- `MessageReceived` for message eligibility, moderation checks, and message XP.
+- `Ready` for command registration, status rotation, and startup initialization.
+- `SlashCommandExecuted` for post-command XP behavior.
+
+Handlers should translate events into feature-service calls. Do not move all feature rules into the central event handler. A future refactor may split focused classes under `Core/Infrastructure/DiscordNet/Handlers/Events/`.
+
+## Verification baseline
+
+For source changes, run:
+
+```bash
+dotnet build "Lyuze 3.0.sln" --no-restore
+git diff --check
+```
+
+When a change affects runtime behavior, also verify the affected Discord flow in a test guild and check MongoDB compatibility when persistence is involved.
+
+For documentation-only changes, check:
+
+- No secrets or real settings are present.
+- Paths and command names match the repository.
+- Internal task tracking is not being presented as public user documentation.
+- Links resolve from the document's location.
+
+## Pull requests and branches
+
+Use short-lived branches with descriptive names:
+
+```text
+refactor/players-leveling-split
+fix/atomic-xp-awards
+feat/github-integration
+docs/public-wiki
+```
+
+Keep a pull request focused on one feature, refactor, or documentation milestone. Include:
+
+- What changed.
+- Why it changed.
+- How it was verified.
+- Known runtime limitations.
+- Any persistence or configuration migration notes.
+
+Do not commit, push, or merge changes without the repository owner's approval.
