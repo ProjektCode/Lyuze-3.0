@@ -1,0 +1,13 @@
+# Public documentation allowlist for the future GitHub Wiki workflow.
+# Paths are relative to the repository root.
+# Keep internal task tracking and private vault material out of this list.
+README.md
+docs/SETUP.md
+docs/CONFIGURATION.md
+docs/COMMANDS.md
+docs/MODERATION.md
+docs/ANIME-IMAGE-SEARCH.md
+docs/ARCHITECTURE.md
+docs/DEVELOPMENT.md
+docs/SPEC.md
+docs/ROADMAP.md
