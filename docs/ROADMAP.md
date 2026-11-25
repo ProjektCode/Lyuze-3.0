@@ -49,7 +49,7 @@ The bot currently depends on `Resources/Settings/settings.json` for secrets, sta
 
 - `[ ]` Build a startup configuration validator for required settings, API credentials, MongoDB connectivity, Discord IDs, URL formats, and permission assumptions.
 - `[ ]` Add safe diagnostics that identify missing or invalid configuration without logging tokens, API keys, passwords, or connection strings.
-- `[ ]` Create a versioned migration path from `settings.json` to MongoDB.
+- `[ ]` Create a versioned migration path from `settings.json` to Redis and PostgresDB. Using Redis for CD Timers and xp queues with Postgres being the main DB.
 - `[ ]` Add dry-run, backup, rollback, and validation steps before destructive configuration changes.
 - `[ ]` Add automated tests for configuration parsing, validation, migration, and failure reporting.
 
